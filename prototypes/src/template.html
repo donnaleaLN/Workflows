@@ -168,6 +168,8 @@ h3{font-size:14px;font-weight:900;margin:0}
 .tog[aria-pressed="true"]{background:var(--accent-weak);border-color:var(--accent);color:var(--accent)}
 select.sel[data-on="true"]{border-color:var(--accent);background-color:var(--accent-weak);background-image:var(--chev-on);color:var(--accent)}
 select.sel{appearance:none;-webkit-appearance:none;border:1px solid var(--line2);background-color:var(--surface);background-image:var(--chev);background-position:right 14px center;background-size:11px 7px;background-repeat:no-repeat;border-radius:999px;padding:5px 34px 5px 12px;font-size:12.5px;font-weight:700;max-width:190px;text-overflow:ellipsis}
+.drange{display:inline-flex;align-items:center;gap:6px}
+.dinp{border:1px solid var(--line2);background:var(--surface);color:var(--ink);border-radius:999px;padding:4px 10px;font:inherit;font-size:12.5px;font-weight:700}
 .search{flex:0 1 210px;min-width:150px;max-width:210px;border:1px solid var(--line2);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:13px}
 .count-line{font-size:12.5px;color:var(--muted);margin-left:auto}
 .tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:16px;overflow-x:auto}
@@ -399,9 +401,10 @@ const srcId = a => a.split(":")[0];
 const docId = a => a.split(":").slice(1).join(":");
 const store = { get(k,d){ try{ const v=localStorage.getItem("edm:"+k); return v?JSON.parse(v):d; }catch(_){ return d; } }, set(k,v){ try{ localStorage.setItem("edm:"+k,JSON.stringify(v)); }catch(_){} } };
 
+const F0 = () => ({driver:"all",dir:"all",high:false,market:false,range:"all",from:"",to:"",theme:"all",decision:"all",q:""});
 const S = {
   setup: store.get("setup", {themes:DATA.themes.map(t=>t.id), drivers:["regulatory","geopolitical","market"], decisions:Object.keys(DEC), watch:[], market:true}),
-  f: {driver:"all", dir:"all", high:false, market:false, fresh:false, theme:"all", decision:"all", q:""},
+  f: F0(),
   thread: null, briefOpen: store.get("brief",true), coSort:"mentions", entAll:{company:false,location:false}, storyOrder:"asc", merge:true, open:null, expanded:new Set(),
   kgQueued: new Set(store.get("kgq",[])), gapReq: new Set(store.get("gapreq",[])), flags: new Set(store.get("flags",[]))
 };
@@ -424,11 +427,17 @@ function passFilters(e){
   if(f.dir!=="all" && e.dir!==f.dir) return false;
   if(f.high && e.mag!=="High") return false;
   if(f.market && !e.market) return false;
-  if(f.fresh && !isNew(e)) return false;
+  if(f.range!=="all"){ const [a,b]=rangeBounds(f); if(a && e.pub<a) return false; if(b && e.pub>b) return false; }
   if(f.theme!=="all" && !e.themes.includes(f.theme)) return false;
   if(f.decision!=="all" && e.decision!==f.decision) return false;
   if(f.q){ const q=f.q.toLowerCase(); const hay=(e.head+" "+e.desc+" "+e.type+" "+e.ents.map(x=>x.n).join(" ")).toLowerCase(); if(!hay.includes(q)) return false; }
   return true;
+}
+const daysAgo = n => new Date(Date.parse(TODAY)-n*864e5).toISOString().slice(0,10);
+function rangeBounds(f){
+  if(f.range==="visit") return [LAST_VISIT,""];
+  if(f.range==="custom") return [f.from||"", f.to||""];
+  const n=+f.range; return n?[daysAgo(n),""]:["",""];
 }
 const scoped = () => E.filter(e=>inSetup(e));
 const visible = () => scoped().filter(passFilters);
@@ -608,7 +617,8 @@ function filters(n, total){
     <select class="sel" id="fDrv" aria-label="Driver" data-on="${f.driver!=="all"}">${[["all","All drivers"],["regulatory","Regulatory"],["geopolitical","Geopolitical"],["market","Market & competitor"]].map(([v,l])=>`<option value="${v}" ${f.driver===v?"selected":""}>${l}</option>`).join("")}</select>
     <select class="sel" id="fDir" aria-label="Impact" data-on="${f.dir!=="all"}">${[["all","Any impact"],["Negative","Negative impact"],["Positive","Positive impact"],["Neutral","Neutral impact"]].map(([v,l])=>`<option value="${v}" ${f.dir===v?"selected":""}>${l}</option>`).join("")}</select>
     ${tog("high","High magnitude","Only events rated high magnitude")}
-    ${tog("fresh","New since "+fmt(LAST_VISIT),"Published since your last visit")}
+    <select class="sel" id="fRange" aria-label="Date range" data-on="${f.range!=="all"}">${[["all","Any date"],["visit","Since last visit ("+fmt(LAST_VISIT)+")"],["7","Last 7 days"],["30","Last 30 days"],["90","Last 90 days"],["custom","Custom range…"]].map(([v,l])=>`<option value="${v}" ${f.range===v?"selected":""}>${l}</option>`).join("")}</select>
+    ${f.range==="custom"?`<span class="drange"><label class="sr" for="fFrom">From</label><input type="date" id="fFrom" class="dinp" min="${AXIS_START}" max="${TODAY}" value="${esc(f.from)}"><span class="muted">to</span><label class="sr" for="fTo">To</label><input type="date" id="fTo" class="dinp" min="${AXIS_START}" max="${TODAY}" value="${esc(f.to)}"></span>`:""}
     ${tog("market","Market-level","Events with no company at the centre")}
     <select class="sel" id="fTheme" aria-label="Energy theme" data-on="${f.theme!=="all"}"><option value="all">All themes</option>${DATA.themes.filter(t=>S.setup.themes.includes(t.id)).map(t=>`<option value="${t.id}" ${f.theme===t.id?"selected":""}>${esc(t.label)}</option>`).join("")}</select>
     <select class="sel" id="fDec" aria-label="Decision" data-on="${f.decision!=="all"}"><option value="all">All decisions</option>${S.setup.decisions.map(d=>`<option value="${d}" ${f.decision===d?"selected":""}>${esc(DEC[d])}</option>`).join("")}</select>
@@ -939,7 +949,7 @@ document.addEventListener("click", ev=>{
   if(d.order){ S.storyOrder=d.order; render(); return; }
   if(d.expand){ S.expanded.has(d.expand)?S.expanded.delete(d.expand):S.expanded.add(d.expand); render(); return; }
   if(el.id==="mergeTog"){ S.merge=!S.merge; render(); return; }
-  if(el.id==="clearF"){ S.f={driver:"all",dir:"all",high:false,market:false,fresh:false,theme:"all",decision:"all",q:""}; render(); return; }
+  if(el.id==="clearF"){ S.f=F0(); render(); return; }
   if(d.setupTheme){ toggleIn(S.setup.themes,d.setupTheme); saveSetup(); render(); return; }
   if(d.setupDriver){ toggleIn(S.setup.drivers,d.setupDriver); saveSetup(); render(); return; }
   if(d.setupWatch){ toggleIn(S.setup.watch,d.setupWatch); saveSetup(); render(); return; }
@@ -951,7 +961,7 @@ document.addEventListener("click", ev=>{
   if(el.id==="resetDemo"){
     try{ Object.keys(localStorage).filter(k=>k.startsWith("edm:")).forEach(k=>localStorage.removeItem(k)); }catch(_){}
     S.setup={themes:DATA.themes.map(t=>t.id),drivers:["regulatory","geopolitical","market"],decisions:Object.keys(DEC),watch:[],market:true};
-    S.f={driver:"all",dir:"all",high:false,market:false,fresh:false,theme:"all",decision:"all",q:""};
+    S.f=F0();
     S.thread=null; S.storyOrder="asc"; S.merge=true; S.open=null; S.expanded=new Set(); S.briefOpen=true;
     S.kgQueued=new Set(); S.gapReq=new Set(); S.flags=new Set();
     CH.ctl&&CH.ctl.abort(); CH.msgs=[]; CH.turns=[]; renderMsgs();
@@ -973,6 +983,9 @@ document.addEventListener("change", ev=>{
   const t=ev.target;
   if(t.dataset.setupDec){ toggleIn(S.setup.decisions,t.dataset.setupDec); saveSetup(); render(); }
   else if(t.dataset.setupMarket!==undefined){ S.setup.market=t.checked; saveSetup(); render(); }
+  else if(t.id==="fRange"){ S.f.range=t.value; if(t.value==="custom"&&!S.f.from){ S.f.from=daysAgo(30); S.f.to=TODAY; } render(); }
+  else if(t.id==="fFrom"){ S.f.from=t.value; render(); }
+  else if(t.id==="fTo"){ S.f.to=t.value; render(); }
   else if(t.id==="fDrv"){ S.f.driver=t.value; render(); }
   else if(t.id==="fDir"){ S.f.dir=t.value; render(); }
   else if(t.id==="fTheme"){ S.f.theme=t.value; render(); }
@@ -1015,12 +1028,14 @@ const CHAT_TOOLS = [
       impact:{type:"string",enum:["all","Negative","Positive","Neutral"]},
       theme:{type:"string",enum:["all",...DATA.themes.map(t=>t.id)]},
       decision:{type:"string",enum:["all",...Object.keys(DEC)]},
-      high_magnitude:{type:"boolean"}, new_only:{type:"boolean"}, market_level:{type:"boolean"},
+      high_magnitude:{type:"boolean"}, market_level:{type:"boolean"},
+      date_range:{type:"string",enum:["all","visit","7","30","90"],description:"visit = since the last visit; numbers = last N days."},
+      date_from:{type:"string",description:"YYYY-MM-DD; sets a custom range"}, date_to:{type:"string",description:"YYYY-MM-DD; sets a custom range"},
       search:{type:"string",description:"Free-text search over headlines, descriptions and names; empty string clears it."},
       clear_all:{type:"boolean",description:"Reset every filter first."}}},
-    execute(i){ if(i.clear_all) S.f={driver:"all",dir:"all",high:false,market:false,fresh:false,theme:"all",decision:"all",q:""};
+    execute(i){ if(i.clear_all) S.f=F0();
       if(i.driver) S.f.driver=String(i.driver); if(i.impact) S.f.dir=String(i.impact); if(i.theme) S.f.theme=String(i.theme); if(i.decision) S.f.decision=String(i.decision);
-      if(typeof i.high_magnitude==="boolean") S.f.high=i.high_magnitude; if(typeof i.new_only==="boolean") S.f.fresh=i.new_only; if(typeof i.market_level==="boolean") S.f.market=i.market_level;
+      if(typeof i.high_magnitude==="boolean") S.f.high=i.high_magnitude; if(i.date_range) S.f.range=String(i.date_range); if(i.date_from||i.date_to){ S.f.range="custom"; S.f.from=String(i.date_from||""); S.f.to=String(i.date_to||""); } if(typeof i.market_level==="boolean") S.f.market=i.market_level;
       if(typeof i.search==="string") S.f.q=i.search;
       if(route()==="setup"||route()==="coverage") location.hash="events"; render(); return {matching_events:visible().length}; } },
   { name:"open_view", description:"Switch the dashboard tab, optionally opening a thread (by thread id) or a company panel (by company name). Returns what was opened.",
