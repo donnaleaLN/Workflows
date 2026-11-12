@@ -280,7 +280,7 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
         <h1>Energy disruption monitor</h1>
         <span class="grow"></span>
         <span class="updated tnum" id="updated"></span>
-        <button class="btn sm" id="resetDemo" type="button" title="Clear all choices, filters and flags and start again from setup"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>Reset demo</button>
+        <button class="btn sm" id="resetDemo" type="button" title="Clear all choices, filters and flags and start again from setup">Refresh</button>
         <button class="btn sm" id="reqBtn" type="button">Requirements map</button>
       </header>
       <div id="view"></div>
@@ -745,7 +745,7 @@ document.addEventListener("click", ev=>{
     S.thread=null; S.storyOrder="asc"; S.merge=true; S.open=null; S.expanded=new Set();
     S.kgQueued=new Set(); S.gapReq=new Set(); S.flags=new Set();
     renderLayer(); if(location.hash!=="#setup") location.hash="setup"; else render();
-    window.scrollTo(0,0); toast("Demo reset"); return;
+    window.scrollTo(0,0); toast("Refreshed"); return;
   }
   if(el.id==="reqBtn"){ S.open="__req"; renderLayer(); return; }
   if(d.req){
