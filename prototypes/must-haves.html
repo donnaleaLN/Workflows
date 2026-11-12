@@ -361,7 +361,6 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
         <span class="proto">Prototype · Must haves</span>
         <h1>Energy disruption monitor</h1>
         <span class="grow"></span>
-        <span class="updated tnum" id="updated"></span>
         <button class="btn sm" id="resetDemo" type="button" title="Clear all choices, filters and flags and return to the dashboard">Refresh</button>
         <button class="btn sm" id="reqBtn" type="button">Requirements map</button>
         <button class="btn sm primary" id="chatTog" type="button" aria-expanded="false" aria-controls="chat">Ask AI</button>
@@ -923,7 +922,6 @@ function render(){
   const focusId=document.activeElement&&document.activeElement.id; const selStart=document.activeElement&&document.activeElement.selectionStart;
   $view.innerHTML = r==="setup"? vSetup() : vMonitor(r);
   document.querySelectorAll(".rail a").forEach(a=>{ if(a.dataset.nav===r) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current"); });
-  document.getElementById("updated").textContent = `Updated ${fmtY(TODAY)} · last visit ${fmt(LAST_VISIT)}`;
   if(focusId){ const el=document.getElementById(focusId); if(el){ el.focus(); if(selStart!=null&&el.setSelectionRange) try{el.setSelectionRange(selStart,selStart);}catch(_){} } }
   window.scrollTo(0,y);
 }
