@@ -20,7 +20,7 @@
   --tag:#FFF3C4; --tag-ink:#6B5A00; --interp:#F3F5F7; --interp-line:#B4BEC8; --interp-ink:#455A64;
   --reg:#7A4CC2; --geo:#C2551F; --mkt:#0A7F8C;
   --sans:Lato,"Helvetica Neue",Arial,sans-serif; --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-  --r:12px; --r-sm:8px; --shadow:0 1px 2px rgba(0,23,46,.06),0 4px 16px rgba(0,23,46,.06);
+  --chat-w:400px; --r:12px; --r-sm:8px; --shadow:0 1px 2px rgba(0,23,46,.06),0 4px 16px rgba(0,23,46,.06);
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#0C1520; --bg2:#101A26; --surface:#142231; --surface2:#1A2A3B; --ink:#E7EEF6; --ink2:#B5C3D1; --muted:#8C9DAE;
@@ -37,6 +37,7 @@
   --tag:#4A4012; --tag-ink:#FFE38A; --interp:#1A2836; --interp-line:#4C5D6E; --interp-ink:#B5C3D1;
   --reg:#B793F0; --geo:#F29A6A; --mkt:#5CCFD9; --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.25); color-scheme:dark}
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html,body{height:100%}
 html{background:var(--bg)}
 body{margin:0;font-family:var(--sans);font-size:14px;line-height:1.45;color:var(--ink);background:linear-gradient(160deg,var(--bg) 0%,var(--bg) 55%,var(--bg2) 100%);background-attachment:fixed}
@@ -44,6 +45,27 @@ button,input,select{font:inherit;color:inherit}
 button{cursor:pointer}
 :focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:6px}
 .app{display:grid;grid-template-columns:56px minmax(0,1fr);min-height:100%}
+.chat-open .app{grid-template-columns:56px minmax(0,1fr) var(--chat-w)}
+.chat{display:none}
+.chat-open .chat{display:flex;flex-direction:column;position:sticky;top:0;height:100vh;border-left:1px solid var(--line);background:var(--surface);min-width:0}
+.chat-h{display:flex;align-items:center;gap:8px;padding:14px 14px 12px 18px;border-bottom:1px solid var(--line);padding-top:calc(14px + env(safe-area-inset-top,0px))}
+.chat-t{flex:1;min-width:0;display:flex;flex-direction:column}
+.chat-t small{color:var(--muted);font-size:12px}
+.chat-h .x{border:0;background:var(--surface2);width:30px;height:30px;border-radius:50%;font-size:17px;line-height:1;flex:none}
+.chat-msgs{flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:12px}
+.chat-empty{color:var(--ink2);display:flex;flex-direction:column;gap:12px}
+.chat-empty p{margin:0}
+.chat-sugg{display:flex;flex-direction:column;align-items:flex-start;gap:8px}
+.chat-sugg .chip{text-align:left;font-weight:700;font-size:12.5px}
+.msg{max-width:100%;font-size:13.5px;line-height:1.5}
+.msg.me{align-self:flex-end;background:var(--ink);color:var(--surface);padding:8px 12px;border-radius:14px 14px 4px 14px;max-width:85%;white-space:pre-wrap}
+.msg.ai p{margin:0 0 8px}.msg.ai ul{margin:0 0 8px;padding-left:18px;display:flex;flex-direction:column;gap:4px}.msg.ai h4{margin:6px 0 4px;font-size:13.5px}
+.msg.ai .cite{margin-left:3px;min-width:19px;height:19px;font-size:11px;padding:0 5px}
+.msg-err{color:var(--neg);font-size:12.5px;margin-top:4px}
+.chat-in{display:flex;gap:8px;align-items:flex-end;padding:12px 14px;border-top:1px solid var(--line);padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))}
+.chat-in textarea{flex:1;min-width:0;resize:none;border:1px solid var(--line2);border-radius:12px;padding:8px 10px;background:var(--surface);color:var(--ink);font:inherit;font-size:13.5px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.chat-open .drawer,.chat-open .reqp{right:var(--chat-w)}
 .rail{position:sticky;top:0;height:100vh;border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:6px;padding-block:18px;background:var(--surface)}
 .rail .logo{width:28px;height:28px;margin-bottom:22px;color:var(--ink);flex:none}
 .rail a{width:38px;height:38px;display:grid;place-items:center;border-radius:10px;color:var(--ink2);text-decoration:none}
@@ -279,7 +301,13 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
   .tstats{grid-template-columns:repeat(3,minmax(0,1fr))}
   .brief-stats{border-left:0;padding-left:0;border-top:1px solid var(--line);padding-top:12px;flex-direction:row;flex-wrap:wrap;gap:18px}
 }
+@media (max-width:1080px){
+  .chat-open .app{grid-template-columns:56px minmax(0,1fr)}
+  .chat-open .chat{position:fixed;inset:0 0 0 auto;width:min(420px,100%);z-index:24;box-shadow:-8px 0 30px rgba(0,23,46,.18)}
+  .chat-open .drawer,.chat-open .reqp{right:0}
+}
 @media (max-width:720px){
+  .chat-open .app{grid-template-columns:minmax(0,1fr)}
   .app{grid-template-columns:minmax(0,1fr)}
   .rail{display:none}
   .drivers,.checks,.cov{grid-template-columns:minmax(0,1fr)}
@@ -322,10 +350,12 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
         <span class="updated tnum" id="updated"></span>
         <button class="btn sm" id="resetDemo" type="button" title="Clear all choices, filters and flags and return to the dashboard">Refresh</button>
         <button class="btn sm" id="reqBtn" type="button">Requirements map</button>
+        <button class="btn sm primary" id="chatTog" type="button" aria-expanded="false" aria-controls="chat">Ask AI</button>
       </header>
       <div id="view"></div>
     </div>
   </main>
+  <aside class="chat" id="chat" aria-label="Chat"></aside>
 </div>
 <div id="layer"></div>
 
@@ -915,6 +945,7 @@ document.addEventListener("click", ev=>{
     S.f={driver:"all",dir:"all",high:false,market:false,fresh:false,theme:"all",decision:"all",q:""};
     S.thread=null; S.storyOrder="asc"; S.merge=true; S.open=null; S.expanded=new Set();
     S.kgQueued=new Set(); S.gapReq=new Set(); S.flags=new Set();
+    CH.ctl&&CH.ctl.abort(); CH.msgs=[]; CH.turns=[]; renderMsgs();
     renderLayer(); if(location.hash!=="#threads") location.hash="threads"; else render();
     window.scrollTo(0,0); toast("Refreshed"); return;
   }
@@ -941,6 +972,141 @@ document.addEventListener("change", ev=>{
 let qT; document.addEventListener("input", ev=>{ if(ev.target.id==="fQ"){ clearTimeout(qT); const v=ev.target.value; qT=setTimeout(()=>{ S.f.q=v; render(); },180); } });
 document.addEventListener("keydown", ev=>{ if(ev.key==="Escape" && S.open){ S.open=null; renderLayer(); } });
 window.addEventListener("hashchange", ()=>{ render(); });
+/* ---------- chat pane ---------- */
+const CH = { open: store.get("chat", window.innerWidth>=1080), turns:[], msgs:[], busy:false, ctl:null, sample:undefined, tools:false };
+const EIDX = E.map(e=>e.id);                                // E1..En -> event id
+const eNum = id => EIDX.indexOf(id)+1;
+const DIGEST = E.map((e,i)=>{
+  const subj=e.ents.filter(x=>x.r==="Subject").map(x=>x.n).join(", ")||"none (market-level)";
+  const others=e.ents.filter(x=>x.r!=="Subject"&&["company","government","organization"].includes(x.t)).slice(0,5).map(x=>`${x.n} (${x.r})`).join(", ");
+  const places=e.ents.filter(x=>x.t==="location").map(x=>x.n).slice(0,4).join(", ");
+  return `E${i+1} | ${e.pub} | ${e.head} | ${e.type} | impact ${e.dir}, magnitude ${e.mag} | driver ${DRV[e.driver]} | themes ${e.themes.map(t=>THEME[t]).join("/")} | thread ${e.thread?THREAD[e.thread].label:"-"} | subject ${subj}${others?` | also ${others}`:""}${places?` | places ${places}`:""} | ${e.desc.slice(0,240)}`;
+}).join("\n");
+function chatRules(){
+  const thr=threadsData();
+  const f=S.f, on=Object.entries(f).filter(([k,v])=>v&&v!=="all").map(([k,v])=>`${k}=${v}`).join(", ")||"none";
+  return `You are the assistant inside "Energy disruption monitor", a prototype that tracks energy-market events for analysts. Answer ONLY from the event data below; if it does not cover the question, say so plainly.
+Rules:
+- Cite events inline with their ids in square brackets, e.g. [E12] or [E12][E40]. Every factual claim needs a citation.
+- Keep facts (what the source reports) separate from interpretation (impact ratings, patterns); say which is which when it matters.
+- Be brief: 2-6 short bullets or a short paragraph. Plain markdown only (bold, bullets). No tables, no headings above level 4.
+- Today is ${fmtY(TODAY)}. The user's last visit was ${fmtY(LAST_VISIT)}; "new" means published on or after that date.
+${CH.tools?`- You can change the dashboard with tools: apply_filters (filter what the dashboard shows) and open_view (switch tab or open a thread/company). Use them when the user asks to see, show, filter or open something, then say briefly what you changed.\n`:""}
+Current dashboard: tab "${route()}", filters: ${on}, open thread: ${S.thread&&THREAD[S.thread]?THREAD[S.thread].label:"none"}.
+Disruption threads (id: label - pattern - reports):
+${thr.map(t=>`${t.id}: ${t.label} - ${t.pats.map(p=>p.k).join(", ")} - ${t.list.length} reports, ${t.fresh} new`).join("\n")}
+
+Event data (${E.length} events; id | published | headline | type | impact | driver | themes | thread | subject | other parties | places | description):
+${DIGEST}`;
+}
+const CHAT_TOOLS = [
+  { name:"apply_filters", description:"Filter the dashboard. Pass only the fields to change; 'all' clears a field. Returns how many events now match.",
+    inputSchema:{type:"object",properties:{
+      driver:{type:"string",enum:["all","regulatory","geopolitical","market"]},
+      impact:{type:"string",enum:["all","Negative","Positive","Neutral"]},
+      theme:{type:"string",enum:["all",...DATA.themes.map(t=>t.id)]},
+      decision:{type:"string",enum:["all",...Object.keys(DEC)]},
+      high_magnitude:{type:"boolean"}, new_only:{type:"boolean"}, market_level:{type:"boolean"},
+      search:{type:"string",description:"Free-text search over headlines, descriptions and names; empty string clears it."},
+      clear_all:{type:"boolean",description:"Reset every filter first."}}},
+    execute(i){ if(i.clear_all) S.f={driver:"all",dir:"all",high:false,market:false,fresh:false,theme:"all",decision:"all",q:""};
+      if(i.driver) S.f.driver=String(i.driver); if(i.impact) S.f.dir=String(i.impact); if(i.theme) S.f.theme=String(i.theme); if(i.decision) S.f.decision=String(i.decision);
+      if(typeof i.high_magnitude==="boolean") S.f.high=i.high_magnitude; if(typeof i.new_only==="boolean") S.f.fresh=i.new_only; if(typeof i.market_level==="boolean") S.f.market=i.market_level;
+      if(typeof i.search==="string") S.f.q=i.search;
+      if(route()==="setup"||route()==="coverage") location.hash="events"; render(); return {matching_events:visible().length}; } },
+  { name:"open_view", description:"Switch the dashboard tab, optionally opening a thread (by thread id) or a company panel (by company name). Returns what was opened.",
+    inputSchema:{type:"object",properties:{tab:{type:"string",enum:["threads","companies","locations","events","coverage"]},thread_id:{type:"string"},company:{type:"string"}}},
+    execute(i){ const tab=i.thread_id?"threads":i.company?"companies":String(i.tab||"threads");
+      if(i.thread_id){ if(!THREAD[String(i.thread_id)]) throw new Error("Unknown thread id"); S.thread=String(i.thread_id); }
+      if(location.hash!=="#"+tab) location.hash=tab; render();
+      if(i.company){ const q=String(i.company).toLowerCase(); const c=companiesData().find(x=>x.variants.some(n=>n.toLowerCase()===q))||companiesData().find(x=>x.variants.some(n=>n.toLowerCase().includes(q)));
+        if(!c) throw new Error("No company by that name in the current view"); S.open="co:"+c.key; renderLayer(); return {opened:c.name}; }
+      return {opened:tab+(i.thread_id?": "+THREAD[String(i.thread_id)].label:"")}; } }
+];
+function mdInline(s, cites){
+  return s.replace(/\*\*(.+?)\*\*/g,"<b>$1</b>")
+    .replace(/\[(E\d+(?:\s*[,;]\s*E\d+)*)\]/g,(m,g)=>g.split(/\s*[,;]\s*/).map(tag=>{ const n=+tag.slice(1); const id=EIDX[n-1]; if(!id) return "";
+      if(!cites.includes(id)) cites.push(id); const e=byId[id]; return `<button type="button" class="cite" data-ev="${esc(id)}" title="${esc(fmt(e.pub)+" · "+e.head)}">${cites.indexOf(id)+1}</button>`; }).join(""));
+}
+function md(t){
+  const cites=[]; let html="", list=false;
+  for(const raw of esc(t).split("\n")){
+    const li=raw.match(/^\s*(?:[-*•]|\d+\.)\s+(.*)/);
+    if(li){ if(!list){ html+="<ul>"; list=true; } html+=`<li>${mdInline(li[1],cites)}</li>`; continue; }
+    if(list){ html+="</ul>"; list=false; }
+    const h=raw.match(/^#{1,6}\s+(.*)/);
+    if(h){ html+=`<h4>${mdInline(h[1],cites)}</h4>`; continue; }
+    if(raw.trim()) html+=`<p>${mdInline(raw,cites)}</p>`;
+  }
+  if(list) html+="</ul>";
+  return html;
+}
+const SUGGEST = ["What changed since my last visit?","Which companies are most exposed to Russia sanctions?","Summarise the Iran sanctions thread","Show me negative geopolitical events"];
+const ERR = { not_granted:"Chat needs your permission to use Claude. Reload the page to be asked again.", sampling_disabled:"Claude isn't available for your account here.", rate_limited:"Too many questions at once. Wait a moment, then try again.",
+  session_expired:"Your session expired. Sign in again, then retry.", refused:"Claude couldn't answer that. Try rephrasing the question.", empty_completion:"No answer came back. Try a simpler question.",
+  prompt_too_large:"The conversation is too long. Clear the chat and ask again.", upstream_error:"The answer was interrupted. Try again." };
+function chatHTML(){
+  return `<div class="chat-h"><div class="chat-t"><b>Ask about this monitor</b><small>Answers come from the ${E.length} events, with sources</small></div>
+      <button class="btn ghost sm" type="button" id="chatClear">Clear</button>
+      <button class="x" type="button" id="chatClose" aria-label="Close chat">×</button></div>
+    <div class="chat-msgs" id="chatMsgs" aria-live="polite"></div>
+    <form class="chat-in" id="chatForm"><label class="sr" for="chatBox">Message</label>
+      <textarea id="chatBox" rows="2" placeholder="Ask about threads, companies or risks"></textarea>
+      <button class="btn primary sm" type="submit" id="chatSend">Send</button></form>`;
+}
+function renderMsgs(){
+  const box=document.getElementById("chatMsgs"); if(!box) return;
+  if(CH.sample===null){ box.innerHTML=`<div class="chat-empty"><p>Chat isn't available in this view. Open the page on claude.ai to ask questions about the events.</p></div>`; return; }
+  if(!CH.msgs.length){ box.innerHTML=`<div class="chat-empty"><p>Ask a question about the events, threads or companies in this monitor. Each answer links to the events it's based on.</p><div class="chat-sugg">${SUGGEST.map(q=>`<button type="button" class="chip" data-ask="${esc(q)}">${esc(q)}</button>`).join("")}</div></div>`; return; }
+  box.innerHTML=CH.msgs.map((m,i)=>m.role==="user"?`<div class="msg me">${esc(m.text)}</div>`
+    :`<div class="msg ai" id="msg${i}">${m.text?md(m.text):'<span class="muted">Thinking…</span>'}${m.err?`<div class="msg-err">${esc(m.err)}</div>`:""}</div>`).join("");
+  box.scrollTop=box.scrollHeight;
+}
+function setBusy(b){ CH.busy=b; const s=document.getElementById("chatSend"); if(s){ s.textContent=b?"Stop":"Send"; s.classList.toggle("primary",!b); } }
+async function ask(q){
+  q=q.trim(); if(!q||CH.busy) return;
+  if(CH.sample===undefined) await initChat();
+  if(!CH.sample){ renderMsgs(); return; }
+  CH.msgs.push({role:"user",text:q}); CH.turns.push({role:"user",content:q});
+  const msg={role:"ai",text:""}; CH.msgs.push(msg); renderMsgs(); setBusy(true);
+  CH.ctl=new AbortController(); const idx=CH.msgs.length-1;
+  const recent=CH.turns.slice(-12); while(recent.length && recent[0].role!=="user") recent.shift();
+  const opts={ signal:CH.ctl.signal, onText:({text})=>{ msg.text=text; const el=document.getElementById("msg"+idx); if(el){ el.innerHTML=md(text); const b=document.getElementById("chatMsgs"); b.scrollTop=b.scrollHeight; } } };
+  if(CH.tools) opts.tools=CHAT_TOOLS; else opts.cache=false;
+  try{
+    const r=await CH.sample([{role:"user",content:chatRules()}, ...recent], opts);
+    msg.text=r.text; CH.turns.push({role:"assistant",content:r.text});
+    if(r.truncated) msg.err="The answer was cut short. Ask for less at a time.";
+  }catch(e){
+    msg.text=e&&e.code==="refused"?"":(e&&e.text)||"";
+    if(e&&e.code==="cancelled"){ if(!msg.text) msg.text="Stopped."; }
+    else msg.err=ERR[e&&e.code]||ERR.upstream_error;
+    if(msg.text) CH.turns.push({role:"assistant",content:msg.text}); else CH.turns.pop();
+  }finally{ CH.ctl=null; setBusy(false); renderMsgs(); }
+}
+async function initChat(){
+  if(CH.sample!==undefined) return;
+  try{ CH.sample = window.claude&&window.claude.use ? await window.claude.use("sample") : null; }catch(_){ CH.sample=null; }
+  if(CH.sample){ try{ const lim=await CH.sample.limits(); CH.tools=!!lim.tools; }catch(_){ CH.tools=false; } }
+}
+function applyChatOpen(){
+  document.body.classList.toggle("chat-open",CH.open);
+  const t=document.getElementById("chatTog"); if(t){ t.hidden=CH.open; t.setAttribute("aria-expanded",CH.open); }
+  store.set("chat",CH.open);
+}
+(function mountChat(){
+  const el=document.getElementById("chat"); el.innerHTML=chatHTML(); renderMsgs(); applyChatOpen();
+  initChat().then(renderMsgs);
+  el.addEventListener("click",ev=>{
+    const a=ev.target.closest("[data-ask]"); if(a){ ask(a.dataset.ask); return; }
+    if(ev.target.closest("#chatClose")){ CH.open=false; applyChatOpen(); return; }
+    if(ev.target.closest("#chatClear")){ CH.ctl&&CH.ctl.abort(); CH.msgs=[]; CH.turns=[]; renderMsgs(); return; }
+    if(ev.target.closest("#chatSend") && CH.busy){ ev.preventDefault(); CH.ctl&&CH.ctl.abort(); }
+  });
+  document.getElementById("chatForm").addEventListener("submit",ev=>{ ev.preventDefault(); if(CH.busy) return; const b=document.getElementById("chatBox"); const v=b.value; b.value=""; ask(v); });
+  document.getElementById("chatBox").addEventListener("keydown",ev=>{ if(ev.key==="Enter"&&!ev.shiftKey){ ev.preventDefault(); document.getElementById("chatForm").requestSubmit(); } });
+  document.getElementById("chatTog").addEventListener("click",()=>{ CH.open=!CH.open; applyChatOpen(); if(CH.open) setTimeout(()=>document.getElementById("chatBox").focus(),0); });
+})();
 render();
 })();
 </script>
