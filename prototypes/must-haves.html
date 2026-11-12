@@ -624,7 +624,7 @@ function filters(n, total){
     <select class="sel" id="fDrv" aria-label="Driver" data-on="${f.driver!=="all"}">${[["all","All drivers"],["regulatory","Regulatory"],["geopolitical","Geopolitical"],["market","Market & competitor"]].map(([v,l])=>`<option value="${v}" ${f.driver===v?"selected":""}>${l}</option>`).join("")}</select>
     <select class="sel" id="fDir" aria-label="Impact" data-on="${f.dir!=="all"}">${[["all","Any impact"],["Negative","Negative impact"],["Positive","Positive impact"],["Neutral","Neutral impact"]].map(([v,l])=>`<option value="${v}" ${f.dir===v?"selected":""}>${l}</option>`).join("")}</select>
     ${tog("high","High magnitude","Only events rated high magnitude")}
-    <select class="sel" id="fRange" aria-label="Date range" data-on="${f.range!=="all"}">${[["all","Any date"],["visit","Since last visit ("+fmt(LAST_VISIT)+")"],["7","Last 7 days"],["30","Last 30 days"],["90","Last 90 days"],["custom","Custom range…"]].map(([v,l])=>`<option value="${v}" ${f.range===v?"selected":""}>${l}</option>`).join("")}</select>
+    <select class="sel" id="fRange" aria-label="Date range" data-on="${f.range!=="all"}">${[["all","Any date"],["7","Last 7 days"],["30","Last 30 days"],["90","Last 90 days"],["custom","Custom range…"]].map(([v,l])=>`<option value="${v}" ${f.range===v?"selected":""}>${l}</option>`).join("")}</select>
     ${f.range==="custom"?`<span class="drange"><label class="sr" for="fFrom">From</label><input type="date" id="fFrom" class="dinp" min="${AXIS_START}" max="${TODAY}" value="${esc(f.from)}"><span class="muted">to</span><label class="sr" for="fTo">To</label><input type="date" id="fTo" class="dinp" min="${AXIS_START}" max="${TODAY}" value="${esc(f.to)}"></span>`:""}
     ${tog("market","Market-level","Events with no company at the centre")}
     <select class="sel" id="fTheme" aria-label="Energy theme" data-on="${f.theme!=="all"}"><option value="all">All themes</option>${DATA.themes.filter(t=>S.setup.themes.includes(t.id)).map(t=>`<option value="${t.id}" ${f.theme===t.id?"selected":""}>${esc(t.label)}</option>`).join("")}</select>
@@ -1036,7 +1036,7 @@ const CHAT_TOOLS = [
       theme:{type:"string",enum:["all",...DATA.themes.map(t=>t.id)]},
       decision:{type:"string",enum:["all",...Object.keys(DEC)]},
       high_magnitude:{type:"boolean"}, market_level:{type:"boolean"},
-      date_range:{type:"string",enum:["all","visit","7","30","90"],description:"visit = since the last visit; numbers = last N days."},
+      date_range:{type:"string",enum:["all","7","30","90"],description:"Last N days, or all."},
       date_from:{type:"string",description:"YYYY-MM-DD; sets a custom range"}, date_to:{type:"string",description:"YYYY-MM-DD; sets a custom range"},
       search:{type:"string",description:"Free-text search over headlines, descriptions and names; empty string clears it."},
       clear_all:{type:"boolean",description:"Reset every filter first."}}},
