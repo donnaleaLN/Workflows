@@ -500,7 +500,7 @@ function brief(sc, thr){
   const lines=[];
   const hot = thr.filter(t=>t.fresh).sort((a,b)=>b.fresh-a.fresh).slice(0,3);
   lines.push(`<b>${fresh.length} new reports since ${fmt(LAST_VISIT)}</b>, which collapse to ${fl.length} distinct developments once repeat coverage is merged.`);
-  hot.forEach(t=>{ const nw=t.list.filter(isNew); const e=nw[nw.length-1]; lines.push(`<b>${esc(t.label)}</b> (${t.pats[0].k.toLowerCase()}): ${esc(e.head)}.${C(e)}${nw.length>1?C(nw[0]):""}`); });
+  hot.forEach(t=>{ const nw=t.list.filter(isNew); const e=nw[nw.length-1]; lines.push(`<b>${esc(t.label)}</b> <span class="pattern ${t.pats[0].c}" style="vertical-align:1px">${t.pats[0].k}</span> ${esc(e.head)}.${C(e)}${nw.length>1?C(nw[0]):""}`); });
   const t30=new Date(Date.parse(TODAY)-45*864e5).toISOString().slice(0,10);
   const negs=sc.filter(e=>e.dir==="Negative"&&e.mag==="High"&&e.pub>=t30).sort((a,b)=>b.pub.localeCompare(a.pub));
   if(negs.length) lines.push(`Highest-risk signal in the last 45 days: ${esc(negs[0].head)}.${C(negs[0])} ${negs.length>1?`${negs.length-1} more high-impact negative events in the same window.`:""}`);
