@@ -192,6 +192,13 @@ select.sel{appearance:none;-webkit-appearance:none;border:1px solid var(--line2)
 .dups button{background:none;border:0;padding:0;text-align:left;color:var(--ink2);font-size:12.5px}
 .dups button:hover{color:var(--accent)}
 .feed{padding:6px 16px 10px}
+.lgrp{display:flex;flex-direction:column;gap:2px;margin-top:6px}
+.lnk{display:grid;grid-template-columns:minmax(0,180px) auto minmax(0,1fr);gap:10px;align-items:baseline;padding:6px 0;border-top:1px solid var(--line);font-size:13px}
+.lnk-name{background:none;border:0;padding:0;text-align:left;font-weight:700;color:var(--ink)}
+.lnk-name:hover{color:var(--accent);text-decoration:underline}
+.lnk-ev{min-width:0;color:var(--ink2)}
+.lnk-ev .more{font-weight:400;color:var(--ink2);text-align:left}
+.lnk-ev .more:hover{color:var(--accent)}
 .co-head,.co{display:grid;grid-template-columns:minmax(0,1.3fr) 64px 140px minmax(0,1.3fr) minmax(0,1.7fr);gap:14px;align-items:center}
 .co-head{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:12px 4px 6px}
 .co{width:100%;text-align:left;background:transparent;border:0;border-top:1px solid var(--line);padding:11px 4px}
@@ -273,6 +280,8 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
   .setup-intro h2{font-size:24px}
   .ev{grid-template-columns:52px minmax(0,1fr)}
   .co-head{display:none}
+  .lnk{grid-template-columns:minmax(0,1fr) auto}
+  .lnk-ev{grid-column:1/-1}
   .co{grid-template-columns:minmax(0,1fr) auto;gap:8px 12px}
   .co-imp,.co-thr,.co-last{grid-column:1/-1}
   .co-last span{white-space:normal}
@@ -650,12 +659,13 @@ function impBar(c){
 }
 function entSub(c){
   return c.kind==="company"
-    ? `${c.centre} at the centre · ${c.ev.length-c.centre} as counterparty${c.kg?"":' · <span class="kg-miss">not in KG</span>'}`
+    ? `${c.centre} at the centre · ${c.ev.length-c.centre} as counterparty${c.links?` · ${c.links} linked${c.exposed?` · <span style="color:var(--neg);font-weight:700">${c.exposed} at risk</span>`:""}`:""}${c.kg?"":' · <span class="kg-miss">not in KG</span>'}`
     : ([c.geo&&`${c.geo} geopolitical`, c.reg&&`${c.reg} regulatory`, c.mkt&&`${c.mkt} market-level`].filter(Boolean).join(" · ") || "Market & competitor events only");
 }
 function vEnts(kind){
   const word=kind==="company"?["company","companies"]:["location","locations"];
   const all=sortEnts(entData(kind));
+  if(kind==="company"){ const idx=linkIndex(); all.forEach(c=>{ const ls=linksFor(c.key,idx); c.links=ls.length; c.exposed=ls.filter(l=>l.neg).length; }); }
   if(!all.length) return `<div class="card empty">No ${word[1]} match these filters.</div>`;
   const showAll=S.entAll[kind]; const list=showAll?all:all.slice(0,25);
   const seg=`<div class="seg" role="group" aria-label="Sort ${word[1]}">${[["mentions","Most events"],["negative","Most negative"],["recent","Most recent"]].map(([v,l])=>`<button type="button" data-cosort="${v}" aria-pressed="${S.coSort===v}">${l}</button>`).join("")}</div>`;
@@ -686,10 +696,59 @@ function vEnt(c){
     <div class="dr-body">
       <div class="tstats tnum" style="grid-template-columns:repeat(4,minmax(0,1fr))">${stats.map(([v,l])=>`<div><b>${v}</b><span>${l}</span></div>`).join("")}</div>
       <div class="sec"><h3>Impact mix</h3><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">${impBar(c)}<span class="muted tnum" style="font-size:12.5px">${c.neg} negative · ${c.neu} neutral · ${c.pos} positive</span></div></div>
+      ${isCo?vLinks(c):""}
       ${cos.length?`<div class="sec"><h3>Companies at the centre here</h3><div class="chips">${cos.map(([n,k])=>`<span class="chip" style="cursor:default">${esc(n)} <span class="ct">${k}</span></span>`).join("")}</div></div>`:""}
       ${c.threads.length?`<div class="sec"><h3>Disruption threads</h3><div class="chips">${c.threads.map(t=>`<a href="#threads" class="chip" data-goto-thread="${t}">${esc(THREAD[t].label)}</a>`).join("")}</div></div>`:""}
       <div class="sec"><h3>Events</h3><div>${c.ev.map(e=>evRow(e)).join("")}</div></div>
     </div></aside>`;
+}
+
+/* ---------- company relationships ---------- */
+const REL = {"Subsidiary":"Subsidiary","Parent Entity":"Parent","Supplier":"Supplier","Customer":"Customer","Partner":"Partner","Target":"Acquisition target","Acquirer":"Acquirer","Seller":"Seller","Investor":"Investor","Lender":"Lender","Competitor":"Competitor","Advisor":"Advisor"};
+const REL_INV = {"Subsidiary":"Parent","Parent Entity":"Subsidiary","Supplier":"Customer","Customer":"Supplier","Partner":"Partner","Target":"Acquirer","Acquirer":"Acquisition target","Seller":"Buyer","Investor":"Investee","Lender":"Borrower","Competitor":"Competitor","Advisor":"Client"};
+const REL_ORDER = ["Parent","Subsidiary","Supplier","Customer","Partner","Counterparty","Acquirer","Acquisition target","Buyer","Seller","Investor","Investee","Lender","Borrower","Competitor","Advisor","Client"];
+const REL_PLURAL = {"Subsidiary":"Subsidiaries","Counterparty":"Other counterparties","Acquisition target":"Acquisition targets","Investee":"Investees","Borrower":"Borrowers","Client":"Clients"};
+const coKey = x => x.kg||("unresolved:"+x.n);
+const tok = n => (n.split(/[^A-Za-z0-9&]+/).find(w=>w.length>=3 && !/^(the|and|inc|ltd|llc|corp)$/i.test(w))||"").toLowerCase().replace(/[&]/g,"");
+function linkIndex(){
+  const idx=new Map();
+  const add=(from,to,rel,e)=>{ if(from===to) return; if(!idx.has(from)) idx.set(from,new Map()); const m=idx.get(from);
+    if(!m.has(to.key)) m.set(to.key,{key:to.key,names:new Set(),rels:new Set(),ev:[]}); const l=m.get(to.key); l.names.add(to.n); l.rels.add(rel); if(!l.ev.includes(e)) l.ev.push(e); };
+  for(const e of visible()){
+    const cos=e.ents.filter(x=>x.t==="company"); const subj=cos.filter(x=>x.r==="Subject"); const oth=cos.filter(x=>x.r!=="Subject"&&REL[x.r]);
+    const ma=e.cat==="M&A & Ownership Activity";
+    for(const o of oth){
+      const ok=coKey(o); let anchors=subj, label=REL[o.r];
+      if(!ma&&["Target","Acquirer","Seller"].includes(o.r)) label="Counterparty";
+      if(o.r==="Parent Entity"||o.r==="Subsidiary"){
+        // ownership roles can describe another company in the event: read the context to find whose parent/subsidiary this is
+        let ctx=(o.x||"").toLowerCase(); const ow=ctx.indexOf("owned"); if(ow>=0) ctx=ctx.slice(ow); const hit=y=>{ const t=tok(y.n); return t && new RegExp("\\b"+t+"\\b").test(ctx); };
+        const named=cos.filter(y=>y!==o&&hit(y));
+        if(named.length && !named.some(y=>y.r==="Subject")) anchors=named;
+        else if(!named.length && /\b(of|owning|owner of)\s+[a-z]/.test(ctx) && !subj.some(hit) && !/\b(ioc|its)\b/.test(ctx)) label="Counterparty";
+      }
+      for(const s of anchors){ const sk=coKey(s); if(sk===ok) continue;
+        add(sk,{key:ok,n:o.n},label,e); add(ok,{key:sk,n:s.n},label==="Counterparty"?"Counterparty":REL_INV[o.r],e); }
+    }
+  }
+  return idx;
+}
+function linksFor(key, idx=linkIndex()){
+  const m=idx.get(key); if(!m) return [];
+  const merged=new Map();
+  for(const l of m.values()){ const nm=shortName([...l.names]).toLowerCase(); if(!merged.has(nm)) merged.set(nm,l); else { const t=merged.get(nm); l.names.forEach(n=>t.names.add(n)); l.rels.forEach(r=>t.rels.add(r)); l.ev.forEach(e=>{ if(!t.ev.includes(e)) t.ev.push(e); }); } }
+  return [...merged.values()].map(l=>{ l.name=shortName([...l.names]); l.ev.sort((a,b)=>b.pub.localeCompare(a.pub)); l.neg=l.ev.filter(e=>e.dir==="Negative").length;
+    l.rel=REL_ORDER.find(r=>l.rels.has(r))||[...l.rels][0]; return l; });
+}
+function vLinks(c){
+  const links=linksFor(c.key); if(!links.length) return "";
+  const exposed=links.filter(l=>l.neg);
+  const groups=REL_ORDER.map(r=>[r,links.filter(l=>l.rel===r).sort((a,b)=>b.neg-a.neg||b.ev.length-a.ev.length)]).filter(([,a])=>a.length);
+  return `<div class="sec"><div class="sec-h"><h3>Connected companies</h3><span class="muted tnum" style="font-size:12.5px">${links.length} linked${exposed.length?` · <b style="color:var(--neg)">${exposed.length} through negative events</b>`:""}</span></div>
+    <p class="muted" style="margin:0;font-size:12.5px">Subsidiaries, parents, suppliers, customers and partners named alongside ${esc(c.name)}. Impact is the rating of the event that links them, so a negative rating means the connection carries risk.</p>
+    ${groups.map(([r,ls])=>`<div class="lgrp"><div class="eyebrow">${esc(REL_PLURAL[r]||r+"s")}</div>${ls.map(l=>{ const e=l.ev[0]; const d=l.neg?"Negative":(l.ev.some(x=>x.dir==="Positive")?"Positive":"Neutral");
+      return `<div class="lnk"><button type="button" class="lnk-name" data-co="${esc(l.key)}">${esc(l.name)}</button><span class="imp ${d}">${d}${l.ev.length>1?` · ${l.ev.length} events`:""}</span><span class="lnk-ev"><button type="button" class="more" data-ev="${esc(e.id)}">${esc(e.head)}</button> <span class="muted">· ${fmt(e.pub)}</span></span></div>`; }).join("")}</div>`).join("")}
+  </div>`;
 }
 
 function vCoverage(sc){
