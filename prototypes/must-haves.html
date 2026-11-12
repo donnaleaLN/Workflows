@@ -513,7 +513,7 @@ function brief(sc, thr){
   const lags=sc.filter(e=>e.tPrec==="Day"&&e.tStart).map(e=>days(e.tStart,e.pub)).filter(x=>x>=0).sort((a,b)=>a-b);
   const med=lags.length?lags[Math.floor(lags.length/2)]:0;
   return `<section class="card brief" aria-label="Briefing">
-    <div><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><h2>Since your last visit</h2><span class="ai-label">AI summary · interpretation</span></div>
+    <div><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><h2>Since your last visit</h2></div>
     <ul>${lines.map(l=>`<li>${l}</li>`).join("")}</ul>
     <div class="muted" style="font-size:12px;margin-top:10px">Written from ${sc.length} classified events. Each numbered link opens the event and its source article. AI-generated content must be reviewed for accuracy.</div></div>
     <div class="brief-stats">
