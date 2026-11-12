@@ -120,6 +120,7 @@ h3{font-size:14px;font-weight:900;margin:0}
 .seg button+button{border-left:1px solid var(--line2)}
 .tog{border:1px solid var(--line2);background:var(--surface);border-radius:999px;padding:5px 11px;font-size:12.5px;font-weight:700}
 .tog[aria-pressed="true"]{background:var(--accent-weak);border-color:var(--accent);color:var(--accent)}
+select.sel[data-on="true"]{border-color:var(--accent);background:var(--accent-weak);color:var(--accent)}
 select.sel{border:1px solid var(--line2);background:var(--surface);border-radius:999px;padding:5px 10px;font-size:12.5px;font-weight:700;max-width:220px}
 .search{flex:1 1 180px;min-width:140px;border:1px solid var(--line2);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:13px}
 .count-line{font-size:12.5px;color:var(--muted);margin-left:auto}
@@ -517,13 +518,13 @@ function filters(n, total){
   const seg=(key,opts)=>`<div class="seg" role="group">${opts.map(([v,l,dot])=>`<button type="button" data-f="${key}" data-v="${v}" aria-pressed="${f[key]===v}">${dot?drvDot(v):""}${l}</button>`).join("")}</div>`;
   const tog=(key,l,title)=>`<button type="button" class="tog" data-ft="${key}" aria-pressed="${f[key]}" title="${esc(title)}">${l}</button>`;
   return `<div class="card filters" role="search">
-    ${seg("driver",[["all","All drivers"],["regulatory","Regulatory",1],["geopolitical","Geopolitical",1],["market","Market",1]])}
-    ${seg("dir",[["all","Any impact"],["Negative","Negative"],["Positive","Positive"]])}
+    <select class="sel" id="fDrv" aria-label="Driver" data-on="${f.driver!=="all"}">${[["all","All drivers"],["regulatory","Regulatory"],["geopolitical","Geopolitical"],["market","Market & competitor"]].map(([v,l])=>`<option value="${v}" ${f.driver===v?"selected":""}>${l}</option>`).join("")}</select>
+    <select class="sel" id="fDir" aria-label="Impact" data-on="${f.dir!=="all"}">${[["all","Any impact"],["Negative","Negative impact"],["Positive","Positive impact"],["Neutral","Neutral impact"]].map(([v,l])=>`<option value="${v}" ${f.dir===v?"selected":""}>${l}</option>`).join("")}</select>
     ${tog("high","High magnitude","Only events rated high magnitude")}
     ${tog("fresh","New since "+fmt(LAST_VISIT),"Published since your last visit")}
     ${tog("market","Market-level","Events with no company at the centre")}
-    <select class="sel" id="fTheme" aria-label="Energy theme"><option value="all">All themes</option>${DATA.themes.filter(t=>S.setup.themes.includes(t.id)).map(t=>`<option value="${t.id}" ${f.theme===t.id?"selected":""}>${esc(t.label)}</option>`).join("")}</select>
-    <select class="sel" id="fDec" aria-label="Decision"><option value="all">All decisions</option>${S.setup.decisions.map(d=>`<option value="${d}" ${f.decision===d?"selected":""}>${esc(DEC[d])}</option>`).join("")}</select>
+    <select class="sel" id="fTheme" aria-label="Energy theme" data-on="${f.theme!=="all"}"><option value="all">All themes</option>${DATA.themes.filter(t=>S.setup.themes.includes(t.id)).map(t=>`<option value="${t.id}" ${f.theme===t.id?"selected":""}>${esc(t.label)}</option>`).join("")}</select>
+    <select class="sel" id="fDec" aria-label="Decision" data-on="${f.decision!=="all"}"><option value="all">All decisions</option>${S.setup.decisions.map(d=>`<option value="${d}" ${f.decision===d?"selected":""}>${esc(DEC[d])}</option>`).join("")}</select>
     <input class="search" id="fQ" type="search" placeholder="Search events, companies, places" value="${esc(f.q)}" aria-label="Search">
     <span class="count-line tnum">${n} of ${total} events${(n<total)?` · <button class="btn ghost sm" type="button" id="clearF">Clear filters</button>`:""}</span>
   </div>`;
@@ -738,6 +739,8 @@ document.addEventListener("change", ev=>{
   const t=ev.target;
   if(t.dataset.setupDec){ toggleIn(S.setup.decisions,t.dataset.setupDec); saveSetup(); render(); }
   else if(t.dataset.setupMarket!==undefined){ S.setup.market=t.checked; saveSetup(); render(); }
+  else if(t.id==="fDrv"){ S.f.driver=t.value; render(); }
+  else if(t.id==="fDir"){ S.f.dir=t.value; render(); }
   else if(t.id==="fTheme"){ S.f.theme=t.value; render(); }
   else if(t.id==="fDec"){ S.f.decision=t.value; render(); }
 });
