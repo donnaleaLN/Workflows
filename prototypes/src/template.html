@@ -192,6 +192,20 @@ select.sel{appearance:none;-webkit-appearance:none;border:1px solid var(--line2)
 .dups button{background:none;border:0;padding:0;text-align:left;color:var(--ink2);font-size:12.5px}
 .dups button:hover{color:var(--accent)}
 .feed{padding:6px 16px 10px}
+.co-head,.co{display:grid;grid-template-columns:minmax(0,1.3fr) 64px 140px minmax(0,1.3fr) minmax(0,1.7fr);gap:14px;align-items:center}
+.co-head{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:12px 4px 6px}
+.co{width:100%;text-align:left;background:transparent;border:0;border-top:1px solid var(--line);padding:11px 4px}
+.co:hover{background:var(--surface2)}
+.co small{display:block;font-size:12px;color:var(--muted)}
+.co-name{min-width:0;display:flex;flex-direction:column;gap:2px}
+.co-n b{font-size:17px;font-weight:900;display:block;line-height:1.1}
+.co-imp{display:flex;flex-direction:column;gap:4px}
+.ibar{display:flex;width:120px;height:8px;border-radius:4px;overflow:hidden;background:var(--line)}
+.ibar i{display:block;height:100%}
+.co-thr{display:flex;flex-wrap:wrap;gap:4px;align-items:center;min-width:0}
+.tchip{font-size:11.5px;font-weight:700;background:var(--surface2);border:1px solid var(--line);border-radius:999px;padding:1px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.co-last{min-width:0;display:flex;flex-direction:column;gap:2px;font-size:13px;color:var(--ink2)}
+.co-last span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .month{font-size:12px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:16px 4px 6px}
 .empty{padding:28px;text-align:center;color:var(--muted)}
 
@@ -258,6 +272,10 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
   .cov .full{grid-column:auto}
   .setup-intro h2{font-size:24px}
   .ev{grid-template-columns:52px minmax(0,1fr)}
+  .co-head{display:none}
+  .co{grid-template-columns:minmax(0,1fr) auto;gap:8px 12px}
+  .co-imp,.co-thr,.co-last{grid-column:1/-1}
+  .co-last span{white-space:normal}
   .b-list li{grid-template-columns:auto 1fr;}
   .b-list .b-head{grid-column:1/-1}
   .b-watch{margin-top:4px}
@@ -334,7 +352,7 @@ const store = { get(k,d){ try{ const v=localStorage.getItem("edm:"+k); return v?
 const S = {
   setup: store.get("setup", {themes:DATA.themes.map(t=>t.id), drivers:["regulatory","geopolitical","market"], decisions:Object.keys(DEC), watch:[], market:true}),
   f: {driver:"all", dir:"all", high:false, market:false, fresh:false, theme:"all", decision:"all", q:""},
-  thread: null, storyOrder:"asc", merge:true, open:null, expanded:new Set(),
+  thread: null, coSort:"mentions", entAll:{company:false,location:false}, storyOrder:"asc", merge:true, open:null, expanded:new Set(),
   kgQueued: new Set(store.get("kgq",[])), gapReq: new Set(store.get("gapreq",[])), flags: new Set(store.get("flags",[]))
 };
 
@@ -503,8 +521,10 @@ function vMonitor(tab){
   const tabs = `<nav class="tabs" aria-label="Views">
     <a href="#threads" ${tab==="threads"?'aria-current="page"':""}>Disruption threads<span>${thr.length}</span></a>
     <a href="#events" ${tab==="events"?'aria-current="page"':""}>All events<span>${vis.length}</span></a>
+    <a href="#companies" ${tab==="companies"?'aria-current="page"':""}>Companies<span>${companiesData().length}</span></a>
+    <a href="#locations" ${tab==="locations"?'aria-current="page"':""}>Locations<span>${locationsData().length}</span></a>
     <a href="#coverage" ${tab==="coverage"?'aria-current="page"':""}>Coverage &amp; sources</a></nav>`;
-  let body = tab==="threads"? vThreads(thr) : tab==="events"? vEvents(vis) : vCoverage(sc);
+  let body = tab==="threads"? vThreads(thr) : tab==="events"? vEvents(vis) : tab==="companies"? vEnts("company") : tab==="locations"? vEnts("location") : vCoverage(sc);
   return scopeTxt + tabs + (tab==="threads"?brief(sc, thr):"") + (tab!=="coverage"?filters(vis.length, sc.length):"") + body;
 }
 
@@ -589,6 +609,87 @@ function vEvents(vis){
   for(const g of groups){ const m=g.lead.pub.slice(0,7); if(m!==cur){ cur=m; html+=`<div class="month">${MON[+m.slice(5)-1]} ${m.slice(0,4)}</div>`; } html+=groupRow(g); }
   return `<section class="card feed"><div class="story-head" style="padding-top:10px"><span class="muted tnum">${S.merge?`${groups.length} developments from ${vis.length} reports`:`${vis.length} reports`}</span>
     <button type="button" class="tog" id="mergeTog" aria-pressed="${S.merge}">Merge repeat reports</button></div>${html}</section>`;
+}
+
+/* ---------- companies & locations ---------- */
+function entData(kind){
+  const m=new Map();
+  for(const e of visible()){
+    const seen=new Set();
+    for(const x of e.ents){
+      if(x.t!==kind) continue;
+      const k=kind==="company"? (x.kg||("unresolved:"+x.n)) : ("loc:"+x.n.trim().toLowerCase());
+      if(seen.has(k)) continue; seen.add(k);
+      if(!m.has(k)) m.set(k,{key:k,kind,kg:!!x.kg,names:new Set(),ev:[],centre:0});
+      const c=m.get(k); c.names.add(x.n); c.ev.push(e); if(x.r==="Subject") c.centre++;
+    }
+  }
+  return [...m.values()].map(c=>{
+    c.ev.sort((a,b)=>b.pub.localeCompare(a.pub));
+    const names=[...c.names]; c.name=shortName(names); c.variants=names;
+    c.neg=c.ev.filter(e=>e.dir==="Negative").length; c.pos=c.ev.filter(e=>e.dir==="Positive").length; c.neu=c.ev.length-c.neg-c.pos;
+    c.fresh=c.ev.filter(isNew).length; c.latest=c.ev[0];
+    c.geo=c.ev.filter(e=>e.drivers.includes("geopolitical")).length; c.reg=c.ev.filter(e=>e.drivers.includes("regulatory")).length; c.mkt=c.ev.filter(e=>e.market).length;
+    const tc={}; c.ev.forEach(e=>{ if(e.thread) tc[e.thread]=(tc[e.thread]||0)+1; });
+    c.threads=Object.entries(tc).sort((a,b)=>b[1]-a[1]).map(([t])=>t);
+    return c;
+  });
+}
+const companiesData=()=>entData("company"), locationsData=()=>entData("location");
+function sortEnts(list){
+  const by={
+    mentions:(a,b)=>b.ev.length-a.ev.length||b.latest.pub.localeCompare(a.latest.pub),
+    negative:(a,b)=>b.neg-a.neg||b.ev.length-a.ev.length,
+    recent:(a,b)=>b.latest.pub.localeCompare(a.latest.pub)||b.ev.length-a.ev.length
+  };
+  return list.slice().sort(by[S.coSort]);
+}
+function impBar(c){
+  const n=c.ev.length||1, w=v=>(v/n*100).toFixed(1)+"%";
+  return `<span class="ibar" aria-hidden="true"><i style="width:${w(c.neg)};background:var(--neg)"></i><i style="width:${w(c.neu)};background:var(--neu)"></i><i style="width:${w(c.pos)};background:var(--pos)"></i></span>`;
+}
+function entSub(c){
+  return c.kind==="company"
+    ? `${c.centre} at the centre · ${c.ev.length-c.centre} as counterparty${c.kg?"":' · <span class="kg-miss">not in KG</span>'}`
+    : ([c.geo&&`${c.geo} geopolitical`, c.reg&&`${c.reg} regulatory`, c.mkt&&`${c.mkt} market-level`].filter(Boolean).join(" · ") || "Market & competitor events only");
+}
+function vEnts(kind){
+  const word=kind==="company"?["company","companies"]:["location","locations"];
+  const all=sortEnts(entData(kind));
+  if(!all.length) return `<div class="card empty">No ${word[1]} match these filters.</div>`;
+  const showAll=S.entAll[kind]; const list=showAll?all:all.slice(0,25);
+  const seg=`<div class="seg" role="group" aria-label="Sort ${word[1]}">${[["mentions","Most events"],["negative","Most negative"],["recent","Most recent"]].map(([v,l])=>`<button type="button" data-cosort="${v}" aria-pressed="${S.coSort===v}">${l}</button>`).join("")}</div>`;
+  const rows=list.map(c=>`<button type="button" class="co" data-co="${esc(c.key)}">
+      <span class="co-name"><span><b>${esc(c.name)}</b>${c.fresh?' <span class="new">New</span>':""}</span><small>${entSub(c)}</small></span>
+      <span class="co-n tnum"><b>${c.ev.length}</b><small>event${c.ev.length===1?"":"s"}</small></span>
+      <span class="co-imp">${impBar(c)}<small class="tnum">${c.neg} neg · ${c.pos} pos</small></span>
+      <span class="co-thr">${c.threads.length?c.threads.slice(0,2).map(t=>`<span class="tchip">${esc(THREAD[t].label)}</span>`).join("")+(c.threads.length>2?`<small>+${c.threads.length-2}</small>`:""):'<small>No thread</small>'}</span>
+      <span class="co-last"><small class="tnum">${fmt(c.latest.pub)}</small><span>${esc(c.latest.head)}</span></span>
+    </button>`).join("");
+  return `<section class="card feed">
+    <div class="story-head" style="padding-top:10px"><span class="muted tnum">${all.length} ${word[1]} named in ${visible().length} events${showAll||all.length<=25?"":" · showing top 25"}</span>${seg}</div>
+    <div class="co-head" aria-hidden="true"><span>${kind==="company"?"Company":"Location"}</span><span>Events</span><span>Impact</span><span>Threads</span><span>Latest</span></div>
+    ${rows}
+    ${all.length>25?`<div style="padding:12px 4px"><button type="button" class="btn sm" data-entall="${kind}">${showAll?"Show top 25":`Show all ${all.length} ${word[1]}`}</button></div>`:""}
+  </section>`;
+}
+function vEnt(c){
+  const isCo=c.kind==="company";
+  const eyebrow=isCo?`Company · ${c.kg?'<span class="kg-ok">Linked in Knowledge Graph</span>':'<span class="kg-miss">Not in Knowledge Graph</span>'}`:"Location";
+  const stats=isCo?[[c.ev.length,"events"],[c.centre,"at the centre"],[c.neg,"negative"],[c.fresh,"new since "+fmt(LAST_VISIT)]]
+                  :[[c.ev.length,"events"],[c.geo,"geopolitical"],[c.neg,"negative"],[c.fresh,"new since "+fmt(LAST_VISIT)]];
+  const cos=!isCo? (()=>{ const m={}; c.ev.forEach(e=>e.ents.filter(x=>x.t==="company"&&x.r==="Subject").forEach(x=>{m[x.n]=(m[x.n]||0)+1;})); return Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,8); })() : [];
+  return `<div class="scrim" data-close></div><aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="coTitle">
+    <div class="dr-head"><div><div class="eyebrow">${eyebrow}</div><h2 id="coTitle" style="margin-top:4px">${esc(c.name)}</h2>
+      ${c.variants.length>1?`<div class="muted" style="font-size:12.5px;margin-top:4px">Also reported as ${esc(c.variants.filter(n=>n!==c.name).join(", "))}</div>`:""}</div>
+      <button class="x" type="button" data-close aria-label="Close">×</button></div>
+    <div class="dr-body">
+      <div class="tstats tnum" style="grid-template-columns:repeat(4,minmax(0,1fr))">${stats.map(([v,l])=>`<div><b>${v}</b><span>${l}</span></div>`).join("")}</div>
+      <div class="sec"><h3>Impact mix</h3><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">${impBar(c)}<span class="muted tnum" style="font-size:12.5px">${c.neg} negative · ${c.neu} neutral · ${c.pos} positive</span></div></div>
+      ${cos.length?`<div class="sec"><h3>Companies at the centre here</h3><div class="chips">${cos.map(([n,k])=>`<span class="chip" style="cursor:default">${esc(n)} <span class="ct">${k}</span></span>`).join("")}</div></div>`:""}
+      ${c.threads.length?`<div class="sec"><h3>Disruption threads</h3><div class="chips">${c.threads.map(t=>`<a href="#threads" class="chip" data-goto-thread="${t}">${esc(THREAD[t].label)}</a>`).join("")}</div></div>`:""}
+      <div class="sec"><h3>Events</h3><div>${c.ev.map(e=>evRow(e)).join("")}</div></div>
+    </div></aside>`;
 }
 
 function vCoverage(sc){
@@ -695,7 +796,7 @@ function vReq(){
 
 /* ---------- render + events ---------- */
 const $view=document.getElementById("view"), $layer=document.getElementById("layer");
-function route(){ const h=(location.hash||"#threads").slice(1); return ["setup","threads","events","coverage"].includes(h)?h:"threads"; }
+function route(){ const h=(location.hash||"#threads").slice(1); return ["setup","threads","events","companies","locations","coverage"].includes(h)?h:"threads"; }
 function render(){
   const r=route(); const y=window.scrollY;
   const focusId=document.activeElement&&document.activeElement.id; const selStart=document.activeElement&&document.activeElement.selectionStart;
@@ -707,6 +808,7 @@ function render(){
 }
 function renderLayer(){
   if(S.open==="__req") $layer.innerHTML=vReq();
+  else if(S.open && S.open.startsWith("co:")){ const k=S.open.slice(3); const c=entData(k.startsWith("loc:")?"location":"company").find(x=>x.key===k); $layer.innerHTML=c?vEnt(c):""; }
   else if(S.open && byId[S.open]) $layer.innerHTML=vDrawer(byId[S.open]);
   else $layer.innerHTML="";
   const x=$layer.querySelector(".x"); if(x) x.focus();
@@ -716,10 +818,13 @@ function saveSetup(){ store.set("setup",S.setup); }
 function toggleIn(arr,v){ const i=arr.indexOf(v); i>=0?arr.splice(i,1):arr.push(v); }
 
 document.addEventListener("click", ev=>{
-  const el=ev.target.closest("[data-ev],[data-thread],[data-thread-go],[data-f],[data-ft],[data-order],[data-expand],[data-setup-theme],[data-setup-driver],[data-setup-watch],[data-kg],[data-gap],[data-flag],[data-close],[data-req],[data-goto-thread],#createBtn,#resetSetup,#resetDemo,#mergeTog,#clearF,#reqBtn");
+  const el=ev.target.closest("[data-ev],[data-co],[data-cosort],[data-entall],[data-thread],[data-thread-go],[data-f],[data-ft],[data-order],[data-expand],[data-setup-theme],[data-setup-driver],[data-setup-watch],[data-kg],[data-gap],[data-flag],[data-close],[data-req],[data-goto-thread],#createBtn,#resetSetup,#resetDemo,#mergeTog,#clearF,#reqBtn");
   if(!el) return;
   const d=el.dataset;
   if(d.ev){ S.open=d.ev; renderLayer(); return; }
+  if(d.co){ S.open="co:"+d.co; renderLayer(); return; }
+  if(d.cosort){ S.coSort=d.cosort; render(); return; }
+  if(d.entall){ S.entAll[d.entall]=!S.entAll[d.entall]; render(); return; }
   if(d.close!==undefined){ S.open=null; renderLayer(); return; }
   if(d.gotoThread){ S.thread=d.gotoThread; S.open=null; renderLayer(); if(route()!=="threads"){ location.hash="threads"; } else render(); window.scrollTo(0,0); ev.preventDefault(); return; }
   if(d.threadGo){ S.thread=d.threadGo; if(route()!=="threads") location.hash="threads"; else render(); const el2=document.querySelector(".threads"); el2&&el2.scrollIntoView({block:"start"}); return; }
