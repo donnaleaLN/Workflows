@@ -280,6 +280,7 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
         <h1>Energy disruption monitor</h1>
         <span class="grow"></span>
         <span class="updated tnum" id="updated"></span>
+        <button class="btn sm" id="resetDemo" type="button" title="Clear all choices, filters and flags and start again from setup"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>Reset demo</button>
         <button class="btn sm" id="reqBtn" type="button">Requirements map</button>
       </header>
       <div id="view"></div>
@@ -716,7 +717,7 @@ function saveSetup(){ store.set("setup",S.setup); }
 function toggleIn(arr,v){ const i=arr.indexOf(v); i>=0?arr.splice(i,1):arr.push(v); }
 
 document.addEventListener("click", ev=>{
-  const el=ev.target.closest("[data-ev],[data-thread],[data-f],[data-ft],[data-order],[data-expand],[data-setup-theme],[data-setup-driver],[data-setup-watch],[data-kg],[data-gap],[data-flag],[data-close],[data-req],[data-goto-thread],#createBtn,#resetSetup,#mergeTog,#clearF,#reqBtn");
+  const el=ev.target.closest("[data-ev],[data-thread],[data-f],[data-ft],[data-order],[data-expand],[data-setup-theme],[data-setup-driver],[data-setup-watch],[data-kg],[data-gap],[data-flag],[data-close],[data-req],[data-goto-thread],#createBtn,#resetSetup,#resetDemo,#mergeTog,#clearF,#reqBtn");
   if(!el) return;
   const d=el.dataset;
   if(d.ev){ S.open=d.ev; renderLayer(); return; }
@@ -737,6 +738,15 @@ document.addEventListener("click", ev=>{
   if(d.kg){ S.kgQueued.add(d.kg); store.set("kgq",[...S.kgQueued]); render(); renderLayer(); toast("Sent to the Knowledge Graph team for review"); return; }
   if(d.gap){ S.gapReq.add(d.gap); store.set("gapreq",[...S.gapReq]); render(); toast("Source request logged"); return; }
   if(d.flag){ S.flags.has(d.flag)?S.flags.delete(d.flag):S.flags.add(d.flag); store.set("flags",[...S.flags]); renderLayer(); toast(S.flags.has(d.flag)?"Flagged for analyst review":"Flag removed"); return; }
+  if(el.id==="resetDemo"){
+    try{ Object.keys(localStorage).filter(k=>k.startsWith("edm:")).forEach(k=>localStorage.removeItem(k)); }catch(_){}
+    S.setup={themes:DATA.themes.map(t=>t.id),drivers:["regulatory","geopolitical","market"],decisions:Object.keys(DEC),watch:[],market:true};
+    S.f={driver:"all",dir:"all",high:false,market:false,fresh:false,theme:"all",decision:"all",q:""};
+    S.thread=null; S.storyOrder="asc"; S.merge=true; S.open=null; S.expanded=new Set();
+    S.kgQueued=new Set(); S.gapReq=new Set(); S.flags=new Set();
+    renderLayer(); if(location.hash!=="#setup") location.hash="setup"; else render();
+    window.scrollTo(0,0); toast("Demo reset"); return;
+  }
   if(el.id==="reqBtn"){ S.open="__req"; renderLayer(); return; }
   if(d.req){
     S.open=null; renderLayer(); const w=d.req;
