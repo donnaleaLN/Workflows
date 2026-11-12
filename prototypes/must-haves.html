@@ -1073,7 +1073,6 @@ const ERR = { not_granted:"Chat needs your permission to use Claude. Reload the 
   prompt_too_large:"The conversation is too long. Clear the chat and ask again.", upstream_error:"The answer was interrupted. Try again." };
 function chatHTML(){
   return `<div class="chat-h"><div class="chat-t"><b>Ask about this monitor</b><small>Answers come from the ${E.length} events, with sources</small></div>
-      <button class="btn ghost sm" type="button" id="chatClear">Clear</button>
       <button class="x" type="button" id="chatClose" aria-label="Close chat">×</button></div>
     <div class="chat-msgs" id="chatMsgs" aria-live="polite"></div>
     <form class="chat-in" id="chatForm"><label class="sr" for="chatBox">Message</label>
