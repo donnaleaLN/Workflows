@@ -572,7 +572,7 @@ function vMonitor(tab){
     <span class="pill">${st.decisions.length} of ${Object.keys(DEC).length} decisions</span>
     ${st.watch.length?`<span class="pill">${st.watch.length} companies followed</span>`:""}
     <a class="btn ghost sm" href="#setup">Edit setup</a>
-    <button type="button" class="chat-show" id="chatShow" aria-controls="chat" aria-expanded="${CH.open}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/></svg><span>${CH.open?"Hide chat":"Show chat"}</span></button></div>`;
+    <button type="button" class="chat-show" id="chatShow" aria-controls="chat" aria-expanded="${CH.open}"${CH.open?" hidden":""}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/></svg><span>Show chat</span></button></div>`;
   const tabs = `<nav class="tabs" aria-label="Views">
     <a href="#threads" ${tab==="threads"?'aria-current="page"':""}>Disruption threads<span>${thr.length}</span></a>
     <a href="#companies" ${tab==="companies"?'aria-current="page"':""}>Companies<span>${companiesData().length}</span></a>
@@ -1110,7 +1110,7 @@ async function initChat(){
 }
 function applyChatOpen(){
   document.body.classList.toggle("chat-open",CH.open);
-  const t=document.getElementById("chatShow"); if(t){ t.setAttribute("aria-expanded",CH.open); t.querySelector("span").textContent=CH.open?"Hide chat":"Show chat"; }
+  const t=document.getElementById("chatShow"); if(t){ t.setAttribute("aria-expanded",CH.open); t.hidden=CH.open; }
 }
 (function mountChat(){
   const el=document.getElementById("chat"); el.innerHTML=chatHTML(); renderMsgs(); applyChatOpen();
