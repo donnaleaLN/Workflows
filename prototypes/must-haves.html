@@ -113,13 +113,23 @@ h3{font-size:14px;font-weight:900;margin:0}
 /* ---------- Monitor ---------- */
 .scope{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding-bottom:12px;color:var(--ink2);font-size:12.5px}
 .scope .pill{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:2px 9px}
-.brief{padding:18px 20px;display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:18px;margin-bottom:14px}
-.brief ul{margin:8px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
-.brief li{padding-left:16px;position:relative;max-width:90ch}
-.brief li::before{content:"";position:absolute;left:2px;top:.6em;width:6px;height:6px;border-radius:50%;background:var(--interp-line)}
 .ai-label{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--interp-ink);background:var(--interp);border:1px solid var(--interp-line);border-radius:999px;padding:2px 9px}
 .cite{border:1px solid var(--line2);background:var(--surface2);border-radius:5px;font-size:11px;font-weight:700;padding:0 5px;margin-left:3px;color:var(--accent);vertical-align:1px}
 .cite:hover{border-color:var(--accent)}
+.brief{padding:16px 20px;margin-bottom:14px;display:flex;flex-direction:column;gap:10px}
+.b-top{display:flex;align-items:baseline;gap:6px 16px;flex-wrap:wrap}
+.b-stats{color:var(--ink2);font-size:13px}
+.b-stats b{color:var(--ink);font-weight:900}
+.b-list{margin:0;padding:0;list-style:none;display:flex;flex-direction:column}
+.b-list li{display:grid;grid-template-columns:minmax(0,280px) 118px minmax(0,1fr);gap:12px;align-items:baseline;padding:7px 0;border-top:1px solid var(--line)}
+.b-list .pattern{justify-self:start}
+.b-thread{background:none;border:0;padding:0;text-align:left;font-weight:700;color:var(--ink)}
+.b-thread:hover{color:var(--accent);text-decoration:underline}
+.b-head{color:var(--ink2);min-width:0}
+.b-watch{display:grid;grid-template-columns:minmax(0,280px) 118px minmax(0,1fr);gap:12px;align-items:baseline;padding:7px 0 0;border-top:1px solid var(--line);margin-top:-10px}
+.b-watch .b-head{grid-column:3}
+.b-label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--neg)}
+.b-note{font-size:11.5px;color:var(--muted)}
 .brief-stats{border-left:1px solid var(--line);padding-left:18px;display:flex;flex-direction:column;gap:10px}
 .stat b{font-size:22px;font-weight:900;display:block;line-height:1.1}
 .stat span{font-size:12px;color:var(--muted)}
@@ -245,7 +255,6 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
   .preview{position:static}
   .threads{grid-template-columns:minmax(0,1fr)}
   .tstats{grid-template-columns:repeat(3,minmax(0,1fr))}
-  .brief{grid-template-columns:minmax(0,1fr)}
   .brief-stats{border-left:0;padding-left:0;border-top:1px solid var(--line);padding-top:12px;flex-direction:row;flex-wrap:wrap;gap:18px}
 }
 @media (max-width:720px){
@@ -255,6 +264,9 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
   .cov .full{grid-column:auto}
   .setup-intro h2{font-size:24px}
   .ev{grid-template-columns:52px minmax(0,1fr)}
+  .b-list li,.b-watch{grid-template-columns:auto 1fr;}
+  .b-list .b-head,.b-watch .b-head{grid-column:1/-1}
+  .b-watch{margin-top:0}
   .ev-tags{grid-column:2;justify-content:flex-start}
   .kv{grid-template-columns:minmax(0,1fr)}
   .kv dt{margin-top:6px}
@@ -503,28 +515,22 @@ function vMonitor(tab){
 }
 
 function brief(sc, thr){
-  const fresh=sc.filter(isNew), fl=leadsOf(fresh);
-  const cites=[]; const C = e => { cites.push(e.id); return `<button type="button" class="cite" data-ev="${esc(e.id)}" title="${esc(e.head)}">${cites.length}</button>`; };
-  const lines=[];
-  const hot = thr.filter(t=>t.fresh).sort((a,b)=>b.fresh-a.fresh).slice(0,3);
-  lines.push(`<b>${fresh.length} new reports since ${fmt(LAST_VISIT)}</b>, which collapse to ${fl.length} distinct developments once repeat coverage is merged.`);
-  hot.forEach(t=>{ const nw=t.list.filter(isNew); const e=nw[nw.length-1]; lines.push(`<b>${esc(t.label)}</b> <span class="pattern ${t.pats[0].c}" style="vertical-align:1px">${t.pats[0].k}</span> ${esc(e.head)}.${C(e)}${nw.length>1?C(nw[0]):""}`); });
-  const t30=new Date(Date.parse(TODAY)-45*864e5).toISOString().slice(0,10);
-  const negs=sc.filter(e=>e.dir==="Negative"&&e.mag==="High"&&e.pub>=t30).sort((a,b)=>b.pub.localeCompare(a.pub));
-  if(negs.length) lines.push(`Highest-risk signal in the last 45 days: ${esc(negs[0].head)}.${C(negs[0])} ${negs.length>1?`${negs.length-1} more high-impact negative events in the same window.`:""}`);
-  const mk=sc.filter(e=>e.market).sort((a,b)=>b.pub.localeCompare(a.pub));
-  if(mk.length) lines.push(`${mk.length} market-level events have no single company at the centre, most recently: ${esc(mk[0].head)}.${C(mk[0])}`);
-  const lags=sc.filter(e=>e.tPrec==="Day"&&e.tStart).map(e=>days(e.tStart,e.pub)).filter(x=>x>=0).sort((a,b)=>a-b);
-  const med=lags.length?lags[Math.floor(lags.length/2)]:0;
+  const fresh=sc.filter(isNew);
+  const cites=[]; const C = e => { cites.push(e.id); return `<button type="button" class="cite" data-ev="${esc(e.id)}" title="Open event and source">${cites.length}</button>`; };
+  // threads that moved: new reports since last visit, or accelerating
+  const moved = thr.filter(t=>t.fresh || t.pats[0].k==="Accelerating")
+    .sort((a,b)=>(b.pats[0].k==="Accelerating")-(a.pats[0].k==="Accelerating") || b.fresh-a.fresh).slice(0,4);
+  const rows = moved.map(t=>{ const e=t.list[t.list.length-1];
+    return `<li><button type="button" class="b-thread" data-thread-go="${t.id}">${esc(t.label)}</button><span class="pattern ${t.pats[0].c}">${t.pats[0].k}</span><span class="b-head">${esc(e.head)}${C(e)}</span></li>`; }).join("");
+  const t45=new Date(Date.parse(TODAY)-45*864e5).toISOString().slice(0,10);
+  const neg=sc.filter(e=>e.dir==="Negative"&&e.mag==="High"&&e.pub>=t45).sort((a,b)=>b.pub.localeCompare(a.pub))[0];
+  const acc=thr.filter(t=>t.pats.some(p=>p.k==="Accelerating")).length;
   return `<section class="card brief" aria-label="Briefing">
-    <div><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><h2>Since your last visit</h2></div>
-    <ul>${lines.map(l=>`<li>${l}</li>`).join("")}</ul>
-    <div class="muted" style="font-size:12px;margin-top:10px">Written from ${sc.length} classified events. Each numbered link opens the event and its source article. AI-generated content must be reviewed for accuracy.</div></div>
-    <div class="brief-stats">
-      <div class="stat"><b class="tnum">${fresh.length}</b><span>new reports since ${fmt(LAST_VISIT)}</span></div>
-      <div class="stat"><b class="tnum">${thr.filter(t=>t.pats.some(p=>p.k==="Accelerating")).length}</b><span>threads accelerating</span></div>
-      <div class="stat"><b class="tnum">${med} day${med===1?"":"s"}</b><span>median from event to alert, where the event date is known to the day</span></div>
-    </div></section>`;
+    <div class="b-top"><h2>Since your last visit</h2><span class="b-stats tnum"><b>${fresh.length}</b> new reports · <b>${acc}</b> thread${acc===1?"":"s"} accelerating</span></div>
+    ${rows?`<ul class="b-list">${rows}</ul>`:'<p class="muted" style="margin:8px 0 0">No thread has moved since your last visit.</p>'}
+    ${neg?`<div class="b-watch"><span class="b-label">Biggest risk</span><span class="b-head">${esc(neg.head)}${C(neg)}</span></div>`:""}
+    <div class="b-note">AI-generated from ${sc.length} classified events. Numbers open the source event. Review for accuracy.</div>
+  </section>`;
 }
 
 function filters(n, total){
@@ -717,12 +723,13 @@ function saveSetup(){ store.set("setup",S.setup); }
 function toggleIn(arr,v){ const i=arr.indexOf(v); i>=0?arr.splice(i,1):arr.push(v); }
 
 document.addEventListener("click", ev=>{
-  const el=ev.target.closest("[data-ev],[data-thread],[data-f],[data-ft],[data-order],[data-expand],[data-setup-theme],[data-setup-driver],[data-setup-watch],[data-kg],[data-gap],[data-flag],[data-close],[data-req],[data-goto-thread],#createBtn,#resetSetup,#resetDemo,#mergeTog,#clearF,#reqBtn");
+  const el=ev.target.closest("[data-ev],[data-thread],[data-thread-go],[data-f],[data-ft],[data-order],[data-expand],[data-setup-theme],[data-setup-driver],[data-setup-watch],[data-kg],[data-gap],[data-flag],[data-close],[data-req],[data-goto-thread],#createBtn,#resetSetup,#resetDemo,#mergeTog,#clearF,#reqBtn");
   if(!el) return;
   const d=el.dataset;
   if(d.ev){ S.open=d.ev; renderLayer(); return; }
   if(d.close!==undefined){ S.open=null; renderLayer(); return; }
   if(d.gotoThread){ S.thread=d.gotoThread; S.open=null; renderLayer(); if(route()!=="threads"){ location.hash="threads"; } else render(); window.scrollTo(0,0); ev.preventDefault(); return; }
+  if(d.threadGo){ S.thread=d.threadGo; if(route()!=="threads") location.hash="threads"; else render(); const el2=document.querySelector(".threads"); el2&&el2.scrollIntoView({block:"start"}); return; }
   if(d.thread){ S.thread=d.thread; render(); if(window.innerWidth<1080){ const a=document.querySelector(".tdetail"); a&&a.scrollIntoView({block:"start"}); } return; }
   if(d.f){ S.f[d.f]=d.v; render(); return; }
   if(d.ft){ S.f[d.ft]=!S.f[d.ft]; render(); return; }
