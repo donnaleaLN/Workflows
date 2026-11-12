@@ -527,9 +527,9 @@ function vMonitor(tab){
     <a class="btn ghost sm" href="#setup">Edit setup</a></div>`;
   const tabs = `<nav class="tabs" aria-label="Views">
     <a href="#threads" ${tab==="threads"?'aria-current="page"':""}>Disruption threads<span>${thr.length}</span></a>
-    <a href="#events" ${tab==="events"?'aria-current="page"':""}>All events<span>${vis.length}</span></a>
     <a href="#companies" ${tab==="companies"?'aria-current="page"':""}>Companies<span>${companiesData().length}</span></a>
     <a href="#locations" ${tab==="locations"?'aria-current="page"':""}>Locations<span>${locationsData().length}</span></a>
+    <a href="#events" ${tab==="events"?'aria-current="page"':""}>All events<span>${vis.length}</span></a>
     <a href="#coverage" ${tab==="coverage"?'aria-current="page"':""}>Coverage &amp; sources</a></nav>`;
   let body = tab==="threads"? vThreads(thr) : tab==="events"? vEvents(vis) : tab==="companies"? vEnts("company") : tab==="locations"? vEnts("location") : vCoverage(sc);
   return scopeTxt + tabs + (tab==="threads"?brief(sc, thr):"") + (tab!=="coverage"?filters(vis.length, sc.length):"") + body;
