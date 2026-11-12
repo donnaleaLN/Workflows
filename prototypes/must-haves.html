@@ -1072,7 +1072,7 @@ const ERR = { not_granted:"Chat needs your permission to use Claude. Reload the 
   session_expired:"Your session expired. Sign in again, then retry.", refused:"Claude couldn't answer that. Try rephrasing the question.", empty_completion:"No answer came back. Try a simpler question.",
   prompt_too_large:"The conversation is too long. Clear the chat and ask again.", upstream_error:"The answer was interrupted. Try again." };
 function chatHTML(){
-  return `<div class="chat-h"><div class="chat-t"><b>Ask about this monitor</b><small>Answers come from the ${E.length} events, with sources</small></div>
+  return `<div class="chat-h"><div class="chat-t"><b>Ask about this monitor</b></div>
       <button class="x" type="button" id="chatClose" aria-label="Close chat">×</button></div>
     <div class="chat-msgs" id="chatMsgs" aria-live="polite"></div>
     <form class="chat-in" id="chatForm"><label class="sr" for="chatBox">Message</label>
