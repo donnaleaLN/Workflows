@@ -695,7 +695,7 @@ function vReq(){
 
 /* ---------- render + events ---------- */
 const $view=document.getElementById("view"), $layer=document.getElementById("layer");
-function route(){ const h=(location.hash||"#setup").slice(1); return ["setup","threads","events","coverage"].includes(h)?h:"setup"; }
+function route(){ const h=(location.hash||"#threads").slice(1); return ["setup","threads","events","coverage"].includes(h)?h:"threads"; }
 function render(){
   const r=route(); const y=window.scrollY;
   const focusId=document.activeElement&&document.activeElement.id; const selStart=document.activeElement&&document.activeElement.selectionStart;
