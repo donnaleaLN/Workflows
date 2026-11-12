@@ -135,7 +135,9 @@ h3{font-size:14px;font-weight:900;margin:0}
 .cite{border:0;background:var(--accent-weak);border-radius:6px;font-size:12px;font-weight:700;line-height:1;min-width:22px;height:22px;padding:0 6px;margin-left:6px;color:var(--accent);display:inline-flex;align-items:center;justify-content:center;vertical-align:middle}
 .cite:hover{background:var(--accent);color:var(--surface)}
 .brief{padding:16px 20px;margin-bottom:14px;display:flex;flex-direction:column;gap:10px}
-.b-top{display:flex;align-items:baseline;gap:6px 16px;flex-wrap:wrap}
+.b-top{display:flex;align-items:baseline;gap:6px 16px;flex-wrap:wrap;cursor:pointer;user-select:none;margin:-16px -20px;padding:16px 20px;border-radius:var(--r)}
+.brief:not(.collapsed) .b-top{margin-bottom:-6px}
+.b-top:hover .b-tog{background:var(--surface2);color:var(--ink)}
 .b-stats{color:var(--ink2);font-size:13px}
 .b-tog{margin-left:auto;align-self:center;width:30px;height:30px;border-radius:50%;border:0;background:transparent;color:var(--ink2);display:grid;place-items:center}
 .b-tog:hover{background:var(--surface2);color:var(--ink)}
@@ -920,11 +922,11 @@ function saveSetup(){ store.set("setup",S.setup); }
 function toggleIn(arr,v){ const i=arr.indexOf(v); i>=0?arr.splice(i,1):arr.push(v); }
 
 document.addEventListener("click", ev=>{
-  const el=ev.target.closest("[data-ev],#briefTog,[data-co],[data-cosort],[data-entall],[data-thread],[data-thread-go],[data-f],[data-ft],[data-order],[data-expand],[data-setup-theme],[data-setup-driver],[data-setup-watch],[data-kg],[data-gap],[data-flag],[data-close],[data-req],[data-goto-thread],#createBtn,#resetSetup,#resetDemo,#mergeTog,#clearF,#reqBtn");
+  const el=ev.target.closest("[data-ev],#briefTog,.b-top,[data-co],[data-cosort],[data-entall],[data-thread],[data-thread-go],[data-f],[data-ft],[data-order],[data-expand],[data-setup-theme],[data-setup-driver],[data-setup-watch],[data-kg],[data-gap],[data-flag],[data-close],[data-req],[data-goto-thread],#createBtn,#resetSetup,#resetDemo,#mergeTog,#clearF,#reqBtn");
   if(!el) return;
   const d=el.dataset;
   if(d.ev){ S.open=d.ev; renderLayer(); return; }
-  if(el.id==="briefTog"){ S.briefOpen=!S.briefOpen; store.set("brief",S.briefOpen); render(); const t=document.getElementById("briefTog"); t&&t.focus(); return; }
+  if(el.id==="briefTog"||el.classList.contains("b-top")){ S.briefOpen=!S.briefOpen; store.set("brief",S.briefOpen); render(); const t=document.getElementById("briefTog"); t&&t.focus(); return; }
   if(d.co){ S.open="co:"+d.co; renderLayer(); return; }
   if(d.cosort){ S.coSort=d.cosort; render(); return; }
   if(d.entall){ S.entAll[d.entall]=!S.entAll[d.entall]; render(); return; }
