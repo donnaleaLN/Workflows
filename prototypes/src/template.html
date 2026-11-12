@@ -505,7 +505,7 @@ function vMonitor(tab){
     <a href="#events" ${tab==="events"?'aria-current="page"':""}>All events<span>${vis.length}</span></a>
     <a href="#coverage" ${tab==="coverage"?'aria-current="page"':""}>Coverage &amp; sources</a></nav>`;
   let body = tab==="threads"? vThreads(thr) : tab==="events"? vEvents(vis) : vCoverage(sc);
-  return scopeTxt + tabs + brief(sc, thr) + (tab!=="coverage"?filters(vis.length, sc.length):"") + body;
+  return scopeTxt + tabs + (tab==="threads"?brief(sc, thr):"") + (tab!=="coverage"?filters(vis.length, sc.length):"") + body;
 }
 
 function brief(sc, thr){
