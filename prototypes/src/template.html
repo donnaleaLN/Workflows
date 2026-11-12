@@ -137,6 +137,11 @@ h3{font-size:14px;font-weight:900;margin:0}
 .brief{padding:16px 20px;margin-bottom:14px;display:flex;flex-direction:column;gap:10px}
 .b-top{display:flex;align-items:baseline;gap:6px 16px;flex-wrap:wrap}
 .b-stats{color:var(--ink2);font-size:13px}
+.b-tog{margin-left:auto;align-self:center;width:30px;height:30px;border-radius:50%;border:0;background:transparent;color:var(--ink2);display:grid;place-items:center}
+.b-tog:hover{background:var(--surface2);color:var(--ink)}
+.b-tog svg{width:12px;height:8px;transition:transform .15s}
+.brief.collapsed .b-tog svg{transform:rotate(-90deg)}
+.b-body{display:flex;flex-direction:column;gap:10px}
 .b-stats b{color:var(--ink);font-weight:900}
 .b-list{margin:0;padding:0;list-style:none;display:flex;flex-direction:column}
 .b-list li{display:grid;grid-template-columns:minmax(0,280px) 118px minmax(0,1fr);gap:12px;align-items:baseline;padding:5px 0}
@@ -395,7 +400,7 @@ const store = { get(k,d){ try{ const v=localStorage.getItem("edm:"+k); return v?
 const S = {
   setup: store.get("setup", {themes:DATA.themes.map(t=>t.id), drivers:["regulatory","geopolitical","market"], decisions:Object.keys(DEC), watch:[], market:true}),
   f: {driver:"all", dir:"all", high:false, market:false, fresh:false, theme:"all", decision:"all", q:""},
-  thread: null, coSort:"mentions", entAll:{company:false,location:false}, storyOrder:"asc", merge:true, open:null, expanded:new Set(),
+  thread: null, briefOpen: store.get("brief",true), coSort:"mentions", entAll:{company:false,location:false}, storyOrder:"asc", merge:true, open:null, expanded:new Set(),
   kgQueued: new Set(store.get("kgq",[])), gapReq: new Set(store.get("gapreq",[])), flags: new Set(store.get("flags",[]))
 };
 
@@ -582,10 +587,14 @@ function brief(sc, thr){
   const t45=new Date(Date.parse(TODAY)-45*864e5).toISOString().slice(0,10);
   const neg=sc.filter(e=>e.dir==="Negative"&&e.mag==="High"&&e.pub>=t45).sort((a,b)=>b.pub.localeCompare(a.pub))[0];
   const acc=thr.filter(t=>t.pats.some(p=>p.k==="Accelerating")).length;
-  return `<section class="card brief" aria-label="Briefing">
-    <div class="b-top"><h2>Since your last visit</h2><span class="b-stats tnum"><b>${fresh.length}</b> new reports · <b>${acc}</b> thread${acc===1?"":"s"} accelerating</span></div>
+  const open=S.briefOpen;
+  return `<section class="card brief${open?"":" collapsed"}" aria-label="Briefing">
+    <div class="b-top"><h2>Since your last visit</h2><span class="b-stats tnum"><b>${fresh.length}</b> new reports · <b>${acc}</b> thread${acc===1?"":"s"} accelerating</span>
+      <button type="button" class="b-tog" id="briefTog" aria-expanded="${open}" aria-controls="briefBody" title="${open?"Collapse":"Expand"}" aria-label="${open?"Collapse":"Expand"} since your last visit"><svg viewBox="0 0 12 8" aria-hidden="true"><path d="M1.2 1.4l4.8 4.8 4.8-4.8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+    <div id="briefBody" class="b-body"${open?"":" hidden"}>
     ${rows?`<ul class="b-list">${rows}</ul>`:'<p class="muted" style="margin:8px 0 0">No thread has moved since your last visit.</p>'}
     ${neg?`<div class="b-watch"><span class="b-label">Biggest risk</span><span class="b-head">${esc(neg.head)}${C(neg)}</span></div>`:""}
+    </div>
   </section>`;
 }
 
@@ -911,10 +920,11 @@ function saveSetup(){ store.set("setup",S.setup); }
 function toggleIn(arr,v){ const i=arr.indexOf(v); i>=0?arr.splice(i,1):arr.push(v); }
 
 document.addEventListener("click", ev=>{
-  const el=ev.target.closest("[data-ev],[data-co],[data-cosort],[data-entall],[data-thread],[data-thread-go],[data-f],[data-ft],[data-order],[data-expand],[data-setup-theme],[data-setup-driver],[data-setup-watch],[data-kg],[data-gap],[data-flag],[data-close],[data-req],[data-goto-thread],#createBtn,#resetSetup,#resetDemo,#mergeTog,#clearF,#reqBtn");
+  const el=ev.target.closest("[data-ev],#briefTog,[data-co],[data-cosort],[data-entall],[data-thread],[data-thread-go],[data-f],[data-ft],[data-order],[data-expand],[data-setup-theme],[data-setup-driver],[data-setup-watch],[data-kg],[data-gap],[data-flag],[data-close],[data-req],[data-goto-thread],#createBtn,#resetSetup,#resetDemo,#mergeTog,#clearF,#reqBtn");
   if(!el) return;
   const d=el.dataset;
   if(d.ev){ S.open=d.ev; renderLayer(); return; }
+  if(el.id==="briefTog"){ S.briefOpen=!S.briefOpen; store.set("brief",S.briefOpen); render(); const t=document.getElementById("briefTog"); t&&t.focus(); return; }
   if(d.co){ S.open="co:"+d.co; renderLayer(); return; }
   if(d.cosort){ S.coSort=d.cosort; render(); return; }
   if(d.entall){ S.entAll[d.entall]=!S.entAll[d.entall]; render(); return; }
@@ -940,7 +950,7 @@ document.addEventListener("click", ev=>{
     try{ Object.keys(localStorage).filter(k=>k.startsWith("edm:")).forEach(k=>localStorage.removeItem(k)); }catch(_){}
     S.setup={themes:DATA.themes.map(t=>t.id),drivers:["regulatory","geopolitical","market"],decisions:Object.keys(DEC),watch:[],market:true};
     S.f={driver:"all",dir:"all",high:false,market:false,fresh:false,theme:"all",decision:"all",q:""};
-    S.thread=null; S.storyOrder="asc"; S.merge=true; S.open=null; S.expanded=new Set();
+    S.thread=null; S.storyOrder="asc"; S.merge=true; S.open=null; S.expanded=new Set(); S.briefOpen=true;
     S.kgQueued=new Set(); S.gapReq=new Set(); S.flags=new Set();
     CH.ctl&&CH.ctl.abort(); CH.msgs=[]; CH.turns=[]; renderMsgs();
     renderLayer(); if(location.hash!=="#threads") location.hash="threads"; else render();
