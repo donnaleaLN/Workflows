@@ -20,7 +20,7 @@
   --tag:#FFF3C4; --tag-ink:#6B5A00; --interp:#F3F5F7; --interp-line:#B4BEC8; --interp-ink:#455A64;
   --reg:#7A4CC2; --geo:#C2551F; --mkt:#0A7F8C;
   --sans:Lato,"Helvetica Neue",Arial,sans-serif; --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-  --chat-w:400px; --r:12px; --r-sm:8px; --shadow:0 1px 2px rgba(0,23,46,.06),0 4px 16px rgba(0,23,46,.06);
+  --chat-w:400px; --band-h:52px; --r:12px; --r-sm:8px; --shadow:0 1px 2px rgba(0,23,46,.06),0 4px 16px rgba(0,23,46,.06);
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#0C1520; --bg2:#101A26; --surface:#142231; --surface2:#1A2A3B; --ink:#E7EEF6; --ink2:#B5C3D1; --muted:#8C9DAE;
@@ -38,7 +38,8 @@
   --reg:#B793F0; --geo:#F29A6A; --mkt:#5CCFD9; --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.25); color-scheme:dark}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-html,body{height:100%}
+html{height:100%}
+body{min-height:100%}
 html{background:var(--bg)}
 body{margin:0;font-family:var(--sans);font-size:14px;line-height:1.45;color:var(--ink);background:linear-gradient(160deg,var(--bg) 0%,var(--bg) 55%,var(--bg2) 100%);background-attachment:fixed}
 button,input,select{font:inherit;color:inherit}
@@ -47,7 +48,7 @@ button{cursor:pointer}
 .app{display:grid;grid-template-columns:56px minmax(0,1fr);min-height:100%}
 .chat-open .app{grid-template-columns:56px var(--chat-w) minmax(0,1fr)}
 .chat{display:none}
-.chat-open .chat{display:flex;flex-direction:column;position:sticky;top:0;height:100vh;border-right:1px solid var(--line);background:var(--surface);min-width:0}
+.chat-open .chat{display:flex;flex-direction:column;position:sticky;top:var(--band-h);height:calc(100vh - var(--band-h));border-right:1px solid var(--line);background:var(--surface);min-width:0}
 .chat-h{display:flex;align-items:center;gap:8px;padding:14px 14px 12px 18px;border-bottom:1px solid var(--line);padding-top:calc(14px + env(safe-area-inset-top,0px))}
 .chat-t{flex:1;min-width:0;display:flex;flex-direction:column}
 .chat-t small{color:var(--muted);font-size:12px}
@@ -65,7 +66,11 @@ button{cursor:pointer}
 .chat-in{display:flex;gap:8px;align-items:flex-end;padding:12px 14px;border-top:1px solid var(--line);padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))}
 .chat-in textarea{flex:1;min-width:0;resize:none;border:1px solid var(--line2);border-radius:12px;padding:8px 10px;background:var(--surface);color:var(--ink);font:inherit;font-size:13.5px}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
-.rail{position:sticky;top:0;height:100vh;border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:6px;padding-block:18px;background:var(--surface)}
+.band{position:sticky;top:env(safe-area-inset-top,0px);z-index:15;height:var(--band-h);display:flex;align-items:center;gap:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));border-bottom:1px solid var(--line);background:var(--surface)}
+.band .grow{flex:1}
+.band .btn,.band .proto{white-space:nowrap}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:16;background:var(--surface)}
+.rail{position:sticky;top:var(--band-h);height:calc(100vh - var(--band-h));border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:6px;padding-block:18px;background:var(--surface)}
 .rail .logo{width:28px;height:28px;margin-bottom:22px;color:var(--ink);flex:none}
 .rail a{width:38px;height:38px;display:grid;place-items:center;border-radius:10px;color:var(--ink2);text-decoration:none}
 .rail a:hover,.rail a[aria-current="page"]{background:var(--accent-weak);color:var(--accent)}
@@ -165,7 +170,7 @@ h3{font-size:14px;font-weight:900;margin:0}
 .brief-stats{border-left:1px solid var(--line);padding-left:18px;display:flex;flex-direction:column;gap:10px}
 .stat b{font-size:22px;font-weight:900;display:block;line-height:1.1}
 .stat span{font-size:12px;color:var(--muted)}
-.filters{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;padding:10px 12px;margin-bottom:12px;position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+.filters{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;padding:10px 12px;margin-bottom:12px;position:sticky;top:calc(var(--band-h) + env(safe-area-inset-top,0px));z-index:5}
 .seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line2);border-radius:999px;overflow:hidden;background:var(--surface)}
 .seg button{border:0;background:transparent;padding:5px 11px;white-space:nowrap;font-size:12.5px;font-weight:700;display:inline-flex;gap:6px;align-items:center}
 .seg button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
@@ -318,6 +323,7 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 }
 @media (max-width:720px){
   .chat-open .app{grid-template-columns:minmax(0,1fr)}
+  .band{height:auto;flex-wrap:wrap;padding-block:8px;row-gap:8px;position:static}
   .app{grid-template-columns:minmax(0,1fr)}
   .rail{display:none}
   .drivers,.checks,.cov{grid-template-columns:minmax(0,1fr)}
@@ -345,6 +351,12 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 }
 </style>
 
+<header class="band">
+  <span class="proto">Prototype · Must haves</span>
+  <span class="grow"></span>
+  <button class="btn sm" id="resetDemo" type="button" title="Clear all choices, filters and flags and return to the dashboard">Refresh</button>
+  <button class="btn sm" id="reqBtn" type="button">Requirements map</button>
+</header>
 <div class="app">
   <nav class="rail" aria-label="Main">
     <svg class="logo" role="img" aria-label="LexisNexis" viewBox="0 0 65 64" fill="none" xmlns="http://www.w3.org/2000/svg"><g clip-path="url(#clip0_406_1426)"><path fill-rule="evenodd" clip-rule="evenodd" d="M29.0352 0.133263C22.8802 0.694431 16.3004 3.2385 11.3913 7.38902C11.331 7.4396 11.3971 7.53298 11.4651 7.49407C15.6615 5.09007 21.4468 5.15035 24.8583 5.5481C26.6555 5.75821 28.4312 6.13453 30.1516 6.66648C31.8729 7.20035 33.5397 7.89374 35.1268 8.72816C35.9505 9.16189 36.7519 9.63554 37.5288 10.1451C40.425 8.85751 43.4786 8.00173 46.5574 7.56896C46.7762 7.53879 47.0077 7.65455 47.0797 7.86262C47.177 8.13593 47.0077 8.41211 46.7441 8.4685C45.09 8.81765 43.4612 9.29315 41.8779 9.89125C41.8088 9.91753 41.8272 10.0216 41.9032 10.0216C44.1467 10.0293 46.3776 10.2696 48.5482 10.7237C48.7409 10.7645 48.9089 10.9192 48.9304 11.1137C48.9673 11.4346 48.6951 11.67 48.4091 11.6281C46.5021 11.3412 44.5678 11.2265 42.6413 11.2887C42.5654 11.2907 42.5528 11.3976 42.6247 11.42C43.5253 11.6962 44.4141 12.0122 45.2845 12.3624C46.9251 13.0314 48.5016 13.8386 49.9963 14.7586C50.1393 14.8451 50.251 15.0192 50.2316 15.1875C50.1897 15.5482 49.8241 15.7038 49.5537 15.555C48.0629 14.7304 46.505 14.0234 44.8994 13.4535C44.2225 13.2162 43.5389 13.0032 42.8494 12.8116C42.7744 12.7912 42.7308 12.8924 42.7959 12.9332C43.9221 13.6461 45.0006 14.426 46.0168 15.2779C47.3734 16.4157 48.6279 17.6644 49.7629 19.0074C49.8718 19.1367 49.9204 19.3313 49.8484 19.4849C49.6948 19.8165 49.2969 19.8476 49.087 19.6181C47.9414 18.3577 46.6858 17.1956 45.3429 16.1473C44.5474 15.5268 43.7159 14.955 42.86 14.424C42.793 14.3822 42.721 14.4698 42.7764 14.5281C43.0206 14.7849 43.2607 15.0464 43.4951 15.3129C44.667 16.6471 45.7183 18.0835 46.6264 19.6016C47.5348 21.1187 48.3011 22.7174 48.9158 24.3678C48.9752 24.5282 48.9537 24.7247 48.8331 24.8452C48.5734 25.1068 48.1845 24.9989 48.0677 24.7071C47.4327 23.1239 46.6528 21.602 45.7416 20.1617C44.8314 18.7215 43.7859 17.3668 42.6296 16.1133C41.4713 14.8636 40.1993 13.72 38.835 12.6969C38.4508 12.4081 37.8673 12.0064 37.6359 11.8576C10.9848 26.7163 20.2332 65.7365 39.4661 63.7089C54.7429 60.0854 65.4743 45.7557 64.1576 29.6649C62.7085 11.9451 46.7403 -1.48199 29.0352 0.133263ZM29.9976 8.26953C30.0726 8.28998 30.0502 8.40179 29.9724 8.39213C18.9832 7.03355 7.72858 12.2597 2.24856 20.0007C2.2039 20.063 2.10665 20.0095 2.13677 19.9385C3.48567 16.8032 5.2634 13.6163 7.54964 11.7696C12.8847 7.46241 21.608 5.8179 29.9976 8.26953ZM27.5898 13.2659C28.3601 12.8964 29.1419 12.5589 29.9355 12.2515C30.0055 12.2234 29.9763 12.1183 29.9014 12.131C6.4479 16.0783 -3.61548 45.2267 12.0465 57.7038C9.77083 54.5841 4.49801 43.7447 12.0144 28.6497C15.4122 21.8753 21.0002 16.4313 27.5898 13.2659ZM17.4075 36.5554C18.6337 28.9944 22.2864 22.0624 27.5398 16.9257C28.5142 15.9639 29.5528 15.0751 30.6304 14.2484C30.6897 14.2028 30.6352 14.1094 30.5682 14.1405C18.306 19.6185 11.2311 33.2957 12.1394 45.7513C12.6374 51.4452 14.8741 61.9307 25.7922 64.0001C25.8603 64.0137 25.8982 63.9233 25.8398 63.8834C21.3498 60.7977 18.1913 53.576 17.4016 48.0853C16.7869 44.2391 16.7967 40.3297 17.4075 36.5554ZM29.7074 10.1034C29.7833 10.1103 29.7843 10.2231 29.7083 10.2299C23.147 10.861 12.4359 15.0524 6.28978 24.7949C3.18081 29.7225 0.967363 35.7927 1.7852 43.4034C1.79309 43.4783 1.68607 43.5036 1.6607 43.4317C1.32328 42.463 0.823425 40.9401 0.643577 40.2039C-0.928072 33.7777 0.404295 26.8799 4.36132 21.5779C6.41427 18.8587 8.94468 16.4966 11.8155 14.6566C14.6776 12.8041 17.8789 11.4931 21.2001 10.7326C24.4881 10.0461 26.9952 9.87006 29.7074 10.1034Z" fill="url(#paint0_linear_406_1426)"></path><path fill-rule="evenodd" clip-rule="evenodd" d="M64.2675 2.85838C64.2675 4.47229 63.0231 5.72647 61.4286 5.72647C59.8341 5.72647 58.58 4.46256 58.58 2.85838C58.58 1.28335 59.8536 0 61.4286 0C63.0231 0 64.2675 1.24446 64.2675 2.85838ZM63.7912 2.86773C63.7912 1.54549 62.7315 0.466309 61.4287 0.466309C60.1259 0.466309 59.0662 1.54549 59.0662 2.86773C59.0662 4.20941 60.1065 5.26915 61.4287 5.26915C62.7509 5.26915 63.7912 4.20941 63.7912 2.86773ZM60.3397 4.42318V1.20508H61.4772C62.2064 1.20508 62.6245 1.54536 62.6245 2.1287C62.6245 2.59538 62.4009 2.89676 61.9828 3.00371L62.7509 4.42318H62.1773L61.4384 3.08149H60.8745V4.42318H60.3397ZM61.4286 1.69067H60.8647V2.62402H61.4481C61.905 2.62402 62.0995 2.47818 62.0897 2.1379C62.0897 1.82679 61.8856 1.69067 61.4286 1.69067Z" fill="currentColor"></path></g><defs><linearGradient id="paint0_linear_406_1426" x1="32.1332" y1="-31.9975" x2="-31.8657" y2="32.2679" gradientUnits="userSpaceOnUse"><stop stop-color="currentColor"></stop><stop offset="1" stop-color="currentColor"></stop></linearGradient><clipPath id="clip0_406_1426"><rect width="64.2675" height="64.0015" fill="white"></rect></clipPath></defs></svg>
@@ -355,11 +367,7 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
   <main>
     <div class="wrap">
       <header class="topbar">
-        <span class="proto">Prototype · Must haves</span>
         <h1>Energy disruption monitor</h1>
-        <span class="grow"></span>
-        <button class="btn sm" id="resetDemo" type="button" title="Clear all choices, filters and flags and return to the dashboard">Refresh</button>
-        <button class="btn sm" id="reqBtn" type="button">Requirements map</button>
       </header>
       <div id="view"></div>
     </div>
